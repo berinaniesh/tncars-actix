@@ -1,0 +1,19 @@
+DROP TABLE IF EXISTS public.messages_images;
+
+CREATE TABLE IF NOT EXISTS public.messages_images
+(
+    id integer NOT NULL DEFAULT nextval('messages_images_id_seq'::regclass),
+    user_id integer NOT NULL DEFAULT nextval('messages_images_user_id_seq'::regclass),
+    image_link character varying COLLATE pg_catalog."default" NOT NULL,
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    CONSTRAINT messages_images_pkey PRIMARY KEY (id),
+    CONSTRAINT user_link FOREIGN KEY (user_id)
+        REFERENCES public.users (id) MATCH SIMPLE
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+-- ALTER TABLE IF EXISTS public.messages_images
+--    OWNER to pg_database_owner;
