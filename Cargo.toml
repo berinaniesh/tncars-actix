@@ -10,4 +10,4 @@ actix-web = "4"
 dotenvy = "0.15.7"
 env_logger = "0.10.0"
 serde = "1.0.163"
-sqlx = { version = "0.7.0-alpha.3", features = ["postgres", "macros", "runtime-tokio"] }
+sqlx = { version = "0.7.1", features = ["postgres", "macros", "runtime-tokio"] }
