@@ -13,12 +13,12 @@ pub fn hash(naive_password: &String) -> String {
 }
 
 // Add better error handling
-pub fn verify(p1: String, p2: String) -> bool {
+pub fn verify(naive_password: &String, hashed_password: &String) -> bool {
     let argon2: Argon2 = Argon2::default();
-    let naive_password = p1.as_bytes();
-    let actual_hashed_password = PasswordHash::new(&p2).unwrap();
+    let naive_pw = naive_password.as_bytes();
+    let actual_hashed_pw = PasswordHash::new(&hashed_password).unwrap();
     let ans = argon2
-        .verify_password(naive_password, &actual_hashed_password)
+        .verify_password(naive_pw, &actual_hashed_pw)
         .is_ok();
     return ans;
 }

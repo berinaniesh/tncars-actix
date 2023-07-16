@@ -31,6 +31,8 @@ impl TNCarsApp {
                 .app_data(web::Data::new(app_state.clone()))
                 .service(routes::hello::hello)
                 .service(routes::users::create_user)
+                .service(routes::users::login_user)
+                .service(routes::users::get_current_user)
         })
         .bind(("127.0.0.1", port))?
         .run()

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.posts_images
     id integer NOT NULL DEFAULT nextval('posts_images_id_seq'::regclass),
     post_id integer NOT NULL,
     image_url character varying COLLATE pg_catalog."default" NOT NULL,
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT posts_images_pkey PRIMARY KEY (id),
     CONSTRAINT post_key FOREIGN KEY (post_id)
         REFERENCES public.posts (id) MATCH SIMPLE

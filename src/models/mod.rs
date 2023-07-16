@@ -4,6 +4,6 @@ pub mod users;
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct Message{
+pub struct Response{
     pub message: String
 }

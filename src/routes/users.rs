@@ -1,8 +1,10 @@
 use crate::misc::appstate::AppState;
-use crate::models::users::CreateUser;
-use crate::models::Message;
-use actix_web::{post, web, HttpResponse};
-use crate::misc::hasher::hash;
+use crate::models::users::{CreateUser, LoginUser, IdPassword, JWTResponse, UserOut};
+use crate::models::Response;
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use crate::misc::jwt::{generate_token, get_id_from_request};
+use crate::misc::hasher::{hash, verify};
+
 
 #[post("/users")]
 pub async fn create_user(
@@ -17,8 +19,52 @@ pub async fn create_user(
     )
     .execute(&app_state.pool)
     .await;
+    if created.is_err() {
+        return HttpResponse::BadRequest().json(Response{message: "User already exists".to_string()});
+    }
+    return HttpResponse::Created().json(Response{message: "Ok".to_string()});
+}
 
-    return HttpResponse::Ok().json(Message {
-        message: "ok".to_string(),
+#[get("/users/login")]
+pub async fn login_user(app_state: web::Data<AppState>, form: web::Json<LoginUser>) -> HttpResponse {
+    let error_response = HttpResponse::BadRequest().json(Response {
+        message: "Login unsuccessful, wrong email or password".to_string(),
     });
+    let pw_result = sqlx::query_as!(IdPassword, "SELECT id, password FROM users WHERE email=$1", &form.email).fetch_one(&app_state.pool).await;
+
+    if pw_result.is_err() {
+        // Wrong password check takes time as it verifies the hash using argon2
+        // But, returning from here is much faster since there is no hashing.
+        // So, someone can find out if an email is registered or not by calculating the delay
+        // So, hash the password once for slowing the return.
+        let _ = hash(&form.password);
+        return error_response;
+    }
+    
+    let id_password = pw_result.unwrap();
+    
+    let is_valid = verify(&form.password, &id_password.password);
+
+    if is_valid {
+        let token = generate_token(id_password.id).unwrap();
+        let response = JWTResponse {email: form.email.clone(), jwt: token};
+        return HttpResponse::Ok().json(response);
+    } else {
+        return error_response;
+    }
+}
+
+#[get("/users/current_user")]
+pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
+    let user = get_id_from_request(&req);
+    match user {
+        Ok(val) => {
+            let user_result = sqlx::query_as!(UserOut, "SELECT email, username, phone, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at FROM users WHERE id=$1", val).fetch_one(&app_state.pool).await;
+            match user_result {
+                Ok(user) =>{return HttpResponse::Ok().json(user);}
+                Err(e) => {return HttpResponse::InternalServerError().json(Response{message: format!("Something went wrong, Error = {}", e)});}
+            }
+        }
+        Err(e) => {return HttpResponse::Unauthorized().json(Response{message: e.to_string()});}
+    }
 }
