@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS public.posts
 
 TABLESPACE pg_default;
 
--- ALTER TABLE IF EXISTS public.posts
---    OWNER to pg_database_owner;
+ALTER TABLE IF EXISTS public.posts
+    OWNER to pg_database_owner;
 
--- COMMENT ON CONSTRAINT user_id ON public.posts
---    IS 'link posts to user_id';
+COMMENT ON CONSTRAINT user_id ON public.posts
+    IS 'link posts to user_id';

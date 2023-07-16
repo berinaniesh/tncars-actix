@@ -30,5 +30,5 @@ CREATE TABLE IF NOT EXISTS public.comments
 
 TABLESPACE pg_default;
 
--- ALTER TABLE IF EXISTS public.comments
---    OWNER to pg_database_owner;
+ALTER TABLE IF EXISTS public.comments
+    OWNER to pg_database_owner;

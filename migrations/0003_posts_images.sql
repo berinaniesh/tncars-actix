@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS public.posts_images
 
 TABLESPACE pg_default;
 
--- ALTER TABLE IF EXISTS public.posts_images
---    OWNER to pg_database_owner;
+ALTER TABLE IF EXISTS public.posts_images
+    OWNER to pg_database_owner;
 
--- COMMENT ON CONSTRAINT post_key ON public.posts_images
---    IS 'link image to post';
+COMMENT ON CONSTRAINT post_key ON public.posts_images
+    IS 'link image to post';

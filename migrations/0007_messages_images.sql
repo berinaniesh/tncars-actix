@@ -23,5 +23,5 @@ CREATE TABLE IF NOT EXISTS public.messages_images
 
 TABLESPACE pg_default;
 
--- ALTER TABLE IF EXISTS public.messages_images
---    OWNER to pg_database_owner;
+ALTER TABLE IF EXISTS public.messages_images
+    OWNER to pg_database_owner;

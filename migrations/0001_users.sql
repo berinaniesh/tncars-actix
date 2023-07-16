@@ -32,5 +32,5 @@ CREATE TABLE IF NOT EXISTS public.users
 
 TABLESPACE pg_default;
 
--- ALTER TABLE IF EXISTS public.users
---    OWNER to pg_database_owner;
+ALTER TABLE IF EXISTS public.users
+    OWNER to pg_database_owner;

@@ -29,5 +29,5 @@ CREATE TABLE IF NOT EXISTS public.messages
 
 TABLESPACE pg_default;
 
--- ALTER TABLE IF EXISTS public.messages
---    OWNER to pg_database_owner;
+ALTER TABLE IF EXISTS public.messages
+    OWNER to pg_database_owner;
