@@ -1,4 +1,4 @@
-mod app;
+mod routes;
 mod middleware;
 
 use actix_web::middleware::Logger;
@@ -28,7 +28,7 @@ impl TNCarsApp {
             App::new()
                 .wrap(Logger::default())
                 .app_data(web::Data::new(app_state.clone()))
-                .service(app::hello::hello)
+                .service(routes::hello::hello)
         })
         .bind(("127.0.0.1", port))?
         .run()
