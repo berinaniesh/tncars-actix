@@ -24,31 +24,3 @@ impl From<sqlx::Error> for AppError {
         AppError::InternalServerError
     }
 }
-
-// impl From<bcrypt::BcryptError> for AppError {
-//     fn from(err: bcrypt::BcryptError) -> Self {
-//         eprintln!("{:?}", err);
-//         AppError::InternalServerError
-//     }
-// }
-
-impl From<actix_session::SessionInsertError> for AppError {
-    fn from(err: actix_session::SessionInsertError) -> Self {
-        eprintln!("{:?}", err);
-        AppError::InternalServerError
-    }
-}
-
-impl From<actix_http::Error> for AppError {
-    fn from(err: actix_http::Error) -> Self {
-        eprintln!("{:?}", err);
-        AppError::InternalServerError
-    }
-}
-
-impl From<jsonwebtoken::errors::Error> for AppError {
-    fn from(err: jsonwebtoken::errors::Error) -> Self {
-        eprintln!("{:?}", err);
-        AppError::InternalServerError
-    }
-}
