@@ -38,3 +38,9 @@ pub struct UserOut {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
+
+pub struct EmailOTP {
+    pub email: String,
+    pub email_verified: bool,
+    pub is_active: bool,
+}
