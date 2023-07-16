@@ -1,7 +1,6 @@
 DROP TABLE IF EXISTS public.users;
 
 CREATE SEQUENCE users_id_seq
-    AS integer
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE

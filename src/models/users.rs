@@ -40,6 +40,7 @@ pub struct UserOut {
 }
 
 pub struct EmailOTP {
+    pub id: i32,
     pub email: String,
     pub email_verified: bool,
     pub is_active: bool,
