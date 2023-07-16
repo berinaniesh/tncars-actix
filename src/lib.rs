@@ -1,11 +1,11 @@
 mod routes;
-mod data;
 mod models;
+mod misc;
 
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 
-use data::appstate::get_appstate;
+use misc::appstate::get_appstate;
 
 pub struct TNCarsApp;
 
@@ -30,6 +30,7 @@ impl TNCarsApp {
                 .wrap(Logger::default())
                 .app_data(web::Data::new(app_state.clone()))
                 .service(routes::hello::hello)
+                .service(routes::users::create_user)
         })
         .bind(("127.0.0.1", port))?
         .run()

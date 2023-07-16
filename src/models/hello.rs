@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize)]
 pub struct HelloMessage {
 	pub greeting: String,
 	pub about: String,
