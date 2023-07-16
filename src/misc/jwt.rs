@@ -36,14 +36,12 @@ pub fn generate_token(id: i32) -> Result<String, Error> {
 
 fn get_id_from_token(token: String) -> Result<i32, Error> {
     let secret = dotenvy::var("JWT_SECRET").expect("JWT_SECRET must be set");
-    dbg!(&secret);
     let token_data_result = jsonwebtoken::decode::<Claims>(
         &token,
         &jsonwebtoken::DecodingKey::from_secret(secret.as_ref()),
         &jsonwebtoken::Validation::default(),
     );
-    let token_data = token_data_result.unwrap();
-    dbg!(&token_data);
+    let token_data = token_data_result?;
     if token_data.claims.exp < Utc::now().timestamp() {
         return Err(Error::msg("Token Expired"));
     }

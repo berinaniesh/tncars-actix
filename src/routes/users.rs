@@ -52,10 +52,23 @@ pub async fn login_user(app_state: web::Data<AppState>, form: web::Json<LoginUse
 
     if is_valid {
         let token = generate_token(id_password.id).unwrap();
-        let response = JWTResponse {email: form.email.clone(), jwt: token};
+        let response = JWTResponse {jwt: token};
         return HttpResponse::Ok().json(response);
     } else {
         return error_response;
+    }
+}
+
+#[get("/users/refreshtoken")]
+pub async fn refresh_token(req: HttpRequest) -> HttpResponse {
+    let user = get_id_from_request(&req);
+    match user {
+        Ok(val) => {
+            let token = generate_token(val).unwrap();
+            let response = JWTResponse {jwt: token};
+            return HttpResponse::Ok().json(response);
+        }
+        Err(e) => {return HttpResponse::Unauthorized().json(Response{message: e.to_string()});}
     }
 }
 

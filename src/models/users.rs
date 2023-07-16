@@ -20,7 +20,6 @@ pub struct IdPassword { // struct to query as when checking for password and ret
 
 #[derive(Serialize)]
 pub struct JWTResponse {
-    pub email: String,
     pub jwt: String,
 }
 
