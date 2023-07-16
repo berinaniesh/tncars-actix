@@ -1,10 +1,18 @@
 DROP TABLE IF EXISTS public.messages;
 
+CREATE SEQUENCE messages_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
 CREATE TABLE IF NOT EXISTS public.messages
 (
     id bigint NOT NULL DEFAULT nextval('messages_id_seq'::regclass),
-    from_user integer NOT NULL DEFAULT nextval('messages_from_user_seq'::regclass),
-    to_user integer NOT NULL DEFAULT nextval('messages_to_user_seq'::regclass),
+    from_user integer NOT NULL,
+    to_user integer NOT NULL,
     message character varying COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     CONSTRAINT messages_pkey PRIMARY KEY (id),

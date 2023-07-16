@@ -1,9 +1,17 @@
 DROP TABLE IF EXISTS public.messages_images;
 
+CREATE SEQUENCE messages_images_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
 CREATE TABLE IF NOT EXISTS public.messages_images
 (
     id integer NOT NULL DEFAULT nextval('messages_images_id_seq'::regclass),
-    user_id integer NOT NULL DEFAULT nextval('messages_images_user_id_seq'::regclass),
+    user_id integer NOT NULL,
     image_link character varying COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     CONSTRAINT messages_images_pkey PRIMARY KEY (id),

@@ -1,10 +1,18 @@
 DROP TABLE IF EXISTS public.likes;
 
+CREATE SEQUENCE likes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
 CREATE TABLE IF NOT EXISTS public.likes
 (
     id integer NOT NULL DEFAULT nextval('likes_id_seq'::regclass),
-    user_id integer NOT NULL DEFAULT nextval('likes_user_id_seq'::regclass),
-    post_id integer NOT NULL DEFAULT nextval('likes_post_id_seq'::regclass),
+    user_id integer NOT NULL,
+    post_id integer NOT NULL,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     CONSTRAINT likes_pkey PRIMARY KEY (id),
     CONSTRAINT post_link FOREIGN KEY (post_id)

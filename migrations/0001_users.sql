@@ -1,5 +1,13 @@
 DROP TABLE IF EXISTS public.users;
 
+CREATE SEQUENCE users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
 CREATE TABLE IF NOT EXISTS public.users
 (
     id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
