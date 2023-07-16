@@ -4,6 +4,7 @@ use crate::models::Response;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use crate::misc::jwt::{generate_token, get_id_from_request};
 use crate::misc::hasher::{hash, verify};
+use regex::Regex;
 
 
 #[post("/users")]
@@ -11,18 +12,22 @@ pub async fn create_user(
     app_state: web::Data<AppState>,
     form: web::Json<CreateUser>,
 ) -> HttpResponse {
+    let email_regex: Regex = Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})").unwrap();
+    if !email_regex.is_match(&form.email) {
+        return HttpResponse::BadRequest().json(Response{message: "Enter a valid email address".to_string()});
+    }
     let hashed_pw = hash(&form.password);
     let created = sqlx::query!(
-        "INSERT INTO users (email, password) values ($1, $2)",
+        "INSERT INTO users (email, password) values ($1, $2) RETURNING *",
         &form.email,
         &hashed_pw
     )
-    .execute(&app_state.pool)
+    .fetch_one(&app_state.pool)
     .await;
     if created.is_err() {
         return HttpResponse::BadRequest().json(Response{message: "User already exists".to_string()});
     }
-    return HttpResponse::Created().json(Response{message: "Ok".to_string()});
+    return HttpResponse::Created().json(Response{message: "User created successfully".to_string()});
 }
 
 #[get("/users/login")]

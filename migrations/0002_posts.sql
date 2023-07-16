@@ -34,3 +34,5 @@ ALTER TABLE IF EXISTS public.posts
 
 COMMENT ON CONSTRAINT user_id ON public.posts
     IS 'link posts to user_id';
+
+CREATE TRIGGER update_customer_modtime BEFORE UPDATE ON posts FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();

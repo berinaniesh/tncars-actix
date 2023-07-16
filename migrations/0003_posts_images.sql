@@ -28,3 +28,5 @@ ALTER TABLE IF EXISTS public.posts_images
 
 COMMENT ON CONSTRAINT post_key ON public.posts_images
     IS 'link image to post';
+
+CREATE TRIGGER update_customer_modtime BEFORE UPDATE ON posts_images FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();

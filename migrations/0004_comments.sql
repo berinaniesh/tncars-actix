@@ -32,3 +32,5 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.comments
     OWNER to pg_database_owner;
+
+CREATE TRIGGER update_customer_modtime BEFORE UPDATE ON comments FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();

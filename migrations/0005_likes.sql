@@ -31,3 +31,5 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.likes
     OWNER to pg_database_owner;
+
+CREATE TRIGGER update_customer_modtime BEFORE UPDATE ON likes FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
