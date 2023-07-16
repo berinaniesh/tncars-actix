@@ -1,10 +1,10 @@
 mod routes;
-mod middleware;
+mod data;
 
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 
-use middleware::appstate::get_appstate;
+use data::appstate::get_appstate;
 
 pub struct TNCarsApp;
 
