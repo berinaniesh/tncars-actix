@@ -1,5 +1,6 @@
 pub mod hello;
 pub mod users;
+pub mod verify;
 
 use serde::Serialize;
 

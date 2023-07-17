@@ -35,6 +35,8 @@ impl TNCarsApp {
                 .service(routes::users::refresh_token)
                 .service(routes::users::get_current_user)
                 .service(routes::users::get_email_otp)
+                .service(routes::verify::email_otp)
+                .service(routes::verify::email_url)
         })
         .bind(("127.0.0.1", port))?
         .run()

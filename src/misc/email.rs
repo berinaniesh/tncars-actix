@@ -10,7 +10,7 @@ pub fn send_email(to: String, otp: String, verify_url: String) -> bool {
     .to(to.parse().unwrap())
     .subject("Verify your account")
     .header(ContentType::TEXT_PLAIN)
-    .body(format!("The OTP to verify your account is {}.\nYou can also verify your account by clicking the link below.\nhttps://tncars.pp.ua/verify/{}.\nThe OTP and the link are valid for the next 15 minutes\nRegards,\ntncars.pp.ua", otp, verify_url))
+    .body(format!("The OTP to verify your account is {}.\nYou can also verify your account by clicking the link below.\nhttps://tncars.pp.ua/verify/url/{}.\nThe OTP and the link are valid for the next 15 minutes\nRegards,\ntncars.pp.ua", otp, verify_url))
     .unwrap();
 
 let creds = Credentials::new(var("EMAIL").unwrap(), var("EMAIL_PASSWORD").unwrap());
