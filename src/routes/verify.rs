@@ -29,7 +29,15 @@ pub async fn email_otp(req: HttpRequest, app_state: web::Data<AppState>, path: w
 }
 
 #[get("/verify/email/url/{var}")]
-pub async fn email_url(req: HttpRequest, app_state: web::Data<AppState>, path: web::Path<String>) -> HttpResponse {
+pub async fn email_url(app_state: web::Data<AppState>, path: web::Path<String>) -> HttpResponse {
     let url = path.into_inner();
-    return HttpResponse::Ok().json(Response{message: url});
+    let verify_result = sqlx::query_as!(EmailVerUrl, "SELECT user_id, expires_at FROM email_otp WHERE verify_url=$1", url).fetch_one(&app_state.pool).await;
+    if verify_result.is_err() {
+        return HttpResponse::BadRequest().json(Response{message: "Wrong verification URL".to_string()});
+    }
+    let email_ver_url = verify_result.unwrap();
+    if email_ver_url.expires_at < Utc::now() {
+        return HttpResponse::BadRequest().json(Response{message: "Verification URL expired, get a new one".to_string()})
+    }
+    return make_email_verified(email_ver_url.user_id, &app_state).await;
 }

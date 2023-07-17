@@ -16,5 +16,10 @@ pub async fn create_otp_and_and_send_email(user_id: i32, email: String, app_stat
 }
 
 pub async fn make_email_verified(user_id: i32, app_state: &web::Data<AppState>) -> HttpResponse {
-    return HttpResponse::Ok().json(Response{message: "hello".to_string()});
+    let update_query = sqlx::query!("UPDATE users set email_verified='t' where id=$1", user_id).execute(&app_state.pool).await;
+    let delete_query = sqlx::query!("DELETE from email_otp where user_id=$1", user_id).execute(&app_state.pool).await;
+    if update_query.is_err() || delete_query.is_err() {
+        return HttpResponse::InternalServerError().json(Response{message: "Something went wrong, try again later".to_string()});
+    }
+    return HttpResponse::Ok().json(Response{message: "Email successfully verified".to_string()});
 }

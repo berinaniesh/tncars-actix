@@ -9,6 +9,5 @@ pub struct EmailVerOtp {
 
 pub struct EmailVerUrl {
     pub user_id: i32,
-    pub verify_url: String,
     pub expires_at: DateTime<Utc>,
 }
