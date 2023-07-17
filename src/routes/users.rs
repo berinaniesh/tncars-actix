@@ -3,7 +3,7 @@ use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
 use crate::models::users::{CreateUser, IdPassword, JWTResponse, LoginUser, UserOut, EmailOTP};
 use crate::models::Response;
-use crate::misc::email::send_email;
+use crate::routes::helper::create_otp_and_and_send_email;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
 use regex::Regex;
 
@@ -119,10 +119,6 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
     }
 }
 
-fn add_otp_to_db(user_id: i32, otp: String, app_state: &web::Data<AppState>) {
-
-}
-
 #[get("/users/emailotp")]
 pub async fn get_email_otp (req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let user_id_result = get_id_from_request(&req);
@@ -130,27 +126,27 @@ pub async fn get_email_otp (req: HttpRequest, app_state: web::Data<AppState>) ->
         return HttpResponse::BadRequest().json(Response{message: "Invalid authorization headers".to_string()});
     }
     let user_id = user_id_result.unwrap();
-    
+
     let query_result = sqlx::query_as!(EmailOTP, "SELECT id, email, email_verified, is_active FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
     if query_result.is_err() {
         return HttpResponse::BadRequest().json(Response{message: "User in token not found in database".to_string()});
     }
     let user = query_result.unwrap();
-    
+
     if !user.is_active {
         return HttpResponse::Unauthorized().json(Response{message: "User is inactive, contact admin to get the problem resolved".to_string()});
     }
-    
+
     if user.email_verified {
         return HttpResponse::BadRequest().json(Response{message: "User already verified".to_string()});
     }
-    
-    let otp = make_email_otp();
-    add_otp_to_db(user.id, otp, &app_state); // # Todo - return something.
-    let ans = send_email_otp(email_otp.email, otp);
-    if ans {
+
+    let res = create_otp_and_and_send_email(user.id, user.email, &app_state).await; // Handle errors properly
+    if res {
         return HttpResponse::Ok().json(Response{message: "Email sent successfully".to_string()});
-    } else {
-        return HttpResponse::InternalServerError().json(Response{message: "The mail server is not available at the moment, try again later".to_string()});
     }
+    else {
+        return HttpResponse::InternalServerError().json(Response{message: "Something went wrong, try again later".to_string()});
+    }
+    
 }

@@ -3,8 +3,7 @@ use jsonwebtoken;
 use chrono::Utc;
 use anyhow::Error;
 use actix_web::HttpRequest;
-
-const JWT_EXPIRY: i64 = 604_800; // Expiry time for a JWT - 604,800 seconds = 1 week. 
+use crate::misc::constants::JWT_EXPIRY;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Claims {

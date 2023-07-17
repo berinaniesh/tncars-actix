@@ -2223,6 +2223,7 @@ dependencies = [
  "env_logger",
  "jsonwebtoken",
  "lettre",
+ "rand",
  "regex",
  "serde",
  "sqlx",
