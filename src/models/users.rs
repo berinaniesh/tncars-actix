@@ -45,3 +45,12 @@ pub struct EmailOTP {
     pub email_verified: bool,
     pub is_active: bool,
 }
+
+#[derive(Deserialize)]
+pub struct UpdateUser {
+    pub email: Option<String>,
+    pub username: Option<String>,
+    pub phone: Option<String>,
+    pub bio: Option<String>,
+    pub address: Option<String>,
+}
