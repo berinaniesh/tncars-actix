@@ -59,24 +59,24 @@ pub async fn get_updated_user(
     let mut user_out = user_result.unwrap();
 
     if form.email.is_some() {
-        let form_email = form.email.unwrap();
-        if validate_email(form_email) {
-            if form_email != user_out.email {
-                user_out.email = form_email;
+        let form_email = form.email.as_ref().unwrap();
+        if validate_email(&form_email) {
+            if form_email.as_str() != user_out.email.as_str() {
+                user_out.email = form_email.to_string();
                 user_out.email_verified = false;
             }
         }
     }
 
     if form.phone.is_some() {
-        let form_phone = form.phone.unwrap();
-        if validate_phone(form_phone) {
+        let form_phone = form.phone.as_ref().unwrap();
+        if validate_phone(form_phone.to_string()) {
             if user_out.phone.is_none() {
-                user_out.phone = Some(form_phone);
+                user_out.phone = Some(form_phone.to_string());
                 user_out.phone_verified = false;
             } else {
-                if form_phone != user_out.phone.unwrap() {
-                    user_out.phone = Some(form_phone);
+                if form_phone.as_str() != user_out.phone.as_ref().unwrap().as_str() {
+                    user_out.phone = Some(form_phone.as_str().to_string());
                     user_out.phone_verified = false;
                 }
             }
@@ -84,15 +84,15 @@ pub async fn get_updated_user(
     }
 
     if form.username.is_some() {
-        user_out.username = Some(form.username.unwrap());
+        user_out.username = Some(form.username.as_ref().unwrap().to_string());
     }
 
     if form.bio.is_some() {
-        user_out.bio = Some(form.bio.unwrap());
+        user_out.bio = Some(form.bio.as_ref().unwrap().to_string());
     }
 
     if form.address.is_some() {
-        user_out.address = Some(form.address.unwrap());
+        user_out.address = Some(form.address.as_ref().unwrap().to_string());
     }
 
     return user_out;

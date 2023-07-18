@@ -1,24 +1,20 @@
 use crate::misc::appstate::AppState;
 use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
+use crate::misc::utils::validate_email;
 use crate::models::users::{
     CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut,
 };
 use crate::models::Response;
 use crate::routes::helper::{create_otp_and_and_send_email, get_updated_user};
 use actix_web::{get, patch, post, web, HttpRequest, HttpResponse};
-use regex::Regex;
 
 #[post("/users")]
 pub async fn create_user(
     app_state: web::Data<AppState>,
     form: web::Json<CreateUser>,
 ) -> HttpResponse {
-    let email_regex: Regex = Regex::new(
-        r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})",
-    )
-    .unwrap();
-    if !email_regex.is_match(&form.email) {
+    if !validate_email(&form.email) {
         return HttpResponse::BadRequest().json(Response {
             message: "Enter a valid email address".to_string(),
         });
