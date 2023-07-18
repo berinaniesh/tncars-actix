@@ -1,6 +1,6 @@
-mod routes;
-mod models;
 mod misc;
+mod models;
+mod routes;
 
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
@@ -44,4 +44,3 @@ impl TNCarsApp {
         .await;
     }
 }
-

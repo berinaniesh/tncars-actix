@@ -1,10 +1,12 @@
 use crate::misc::appstate::AppState;
 use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
-use crate::models::users::{CreateUser, IdPassword, JWTResponse, LoginUser, UserOut, EmailOTP, UpdateUser};
+use crate::models::users::{
+    CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut,
+};
 use crate::models::Response;
 use crate::routes::helper::{create_otp_and_and_send_email, get_updated_user};
-use actix_web::{get, post, patch, web, HttpRequest, HttpResponse};
+use actix_web::{get, patch, post, web, HttpRequest, HttpResponse};
 use regex::Regex;
 
 #[post("/users")]
@@ -120,48 +122,74 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
 }
 
 #[get("/users/emailotp")]
-pub async fn get_email_otp (req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let user_id_result = get_id_from_request(&req);
     if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response{message: "Invalid authorization headers".to_string()});
+        return HttpResponse::BadRequest().json(Response {
+            message: "Invalid authorization headers".to_string(),
+        });
     }
     let user_id = user_id_result.unwrap();
 
-    let query_result = sqlx::query_as!(EmailOTP, "SELECT id, email, email_verified, is_active FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
+    let query_result = sqlx::query_as!(
+        EmailOTP,
+        "SELECT id, email, email_verified, is_active FROM users WHERE id=$1",
+        user_id
+    )
+    .fetch_one(&app_state.pool)
+    .await;
     if query_result.is_err() {
-        return HttpResponse::BadRequest().json(Response{message: "User in token not found in database".to_string()});
+        return HttpResponse::BadRequest().json(Response {
+            message: "User in token not found in database".to_string(),
+        });
     }
     let user = query_result.unwrap();
 
     if !user.is_active {
-        return HttpResponse::Unauthorized().json(Response{message: "User is inactive, contact admin to get the problem resolved".to_string()});
+        return HttpResponse::Unauthorized().json(Response {
+            message: "User is inactive, contact admin to get the problem resolved".to_string(),
+        });
     }
 
     if user.email_verified {
-        return HttpResponse::BadRequest().json(Response{message: "User already verified".to_string()});
+        return HttpResponse::BadRequest().json(Response {
+            message: "User already verified".to_string(),
+        });
     }
 
     let res = create_otp_and_and_send_email(user.id, user.email, &app_state).await; // Handle errors properly
     if res {
-        return HttpResponse::Ok().json(Response{message: "Email sent successfully".to_string()});
+        return HttpResponse::Ok().json(Response {
+            message: "Email sent successfully".to_string(),
+        });
+    } else {
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
+        });
     }
-    else {
-        return HttpResponse::InternalServerError().json(Response{message: "Something went wrong, try again later".to_string()});
-    }
-    
 }
 
 #[patch("/users/currentuser")]
-pub async fn update_user(req: HttpRequest, form: web::Json<UpdateUser>, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn update_user(
+    req: HttpRequest,
+    form: web::Json<UpdateUser>,
+    app_state: web::Data<AppState>,
+) -> HttpResponse {
     let user_id_result = get_id_from_request(&req);
     if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response{message: "Invalid authorization headers".to_string()});
+        return HttpResponse::BadRequest().json(Response {
+            message: "Invalid authorization headers".to_string(),
+        });
     }
     let user_id = user_id_result.unwrap();
     let updated_user = get_updated_user(user_id, &form, &app_state).await;
     let q = sqlx::query!("UPDATE users set email=$1, username=$2, phone=$3, bio=$4, address=$5, email_verified=$6, phone_verified=$7", updated_user.email, updated_user.username, updated_user.phone, updated_user.bio, updated_user.address, updated_user.email_verified, updated_user.phone_verified).execute(&app_state.pool).await;
     if q.is_err() {
-        HttpResponse::InternalServerError().json(Response{message: "Something went wrong, try again later".to_string()});
+        HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
+        });
     }
-    return HttpResponse::Ok().json(Response{message: "Updated".to_string()});
+    return HttpResponse::Ok().json(Response {
+        message: "Updated".to_string(),
+    });
 }

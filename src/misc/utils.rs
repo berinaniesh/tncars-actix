@@ -1,7 +1,9 @@
 use rand::distributions::{Alphanumeric, DistString};
 
 pub fn generate_otp() -> String {
-    let string = Alphanumeric.sample_string(&mut rand::thread_rng(), 7).to_uppercase();
+    let string = Alphanumeric
+        .sample_string(&mut rand::thread_rng(), 7)
+        .to_uppercase();
     return string;
 }
 

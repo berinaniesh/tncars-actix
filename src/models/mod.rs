@@ -5,6 +5,6 @@ pub mod verify;
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct Response{
-    pub message: String
+pub struct Response {
+    pub message: String,
 }

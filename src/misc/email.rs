@@ -13,16 +13,16 @@ pub fn send_email(to: String, otp: String, verify_url: String) -> bool {
     .body(format!("The OTP to verify your account is {}.\nYou can also verify your account by clicking the link below.\nhttps://tncars.pp.ua/verify/url/{}.\nThe OTP and the link are valid for the next 15 minutes\nRegards,\ntncars.pp.ua", otp, verify_url))
     .unwrap();
 
-let creds = Credentials::new(var("EMAIL").unwrap(), var("EMAIL_PASSWORD").unwrap());
+    let creds = Credentials::new(var("EMAIL").unwrap(), var("EMAIL_PASSWORD").unwrap());
 
-let mailer = SmtpTransport::relay(var("EMAIL_SERVER").unwrap().as_str())
-    .unwrap()
-    .credentials(creds)
-    .build();
+    let mailer = SmtpTransport::relay(var("EMAIL_SERVER").unwrap().as_str())
+        .unwrap()
+        .credentials(creds)
+        .build();
 
-// Send the email
-match mailer.send(&email) {
-    Ok(_) => return true,
-    Err(_) => return false,
+    // Send the email
+    match mailer.send(&email) {
+        Ok(_) => return true,
+        Err(_) => return false,
     }
 }

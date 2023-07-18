@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct CreateUser {
@@ -13,7 +13,8 @@ pub struct LoginUser {
     pub password: String,
 }
 
-pub struct IdPassword { // struct to query as when checking for password and returning jwt. 
+pub struct IdPassword {
+    // struct to query as when checking for password and returning jwt.
     pub id: i32,
     pub password: String,
 }

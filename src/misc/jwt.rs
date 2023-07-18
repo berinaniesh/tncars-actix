@@ -1,14 +1,14 @@
-use serde::{Serialize, Deserialize};
-use jsonwebtoken;
-use chrono::Utc;
-use anyhow::Error;
-use actix_web::HttpRequest;
 use crate::misc::constants::JWT_EXPIRY;
+use actix_web::HttpRequest;
+use anyhow::Error;
+use chrono::Utc;
+use jsonwebtoken;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Claims {
     user_id: i32, // User Id - Primary Key of users table
-    exp: i64, // Unix timestamp in seconds (UTC)
+    exp: i64,     // Unix timestamp in seconds (UTC)
 }
 
 impl Claims {
@@ -50,8 +50,8 @@ fn get_id_from_token(token: String) -> Result<i32, Error> {
 pub fn get_id_from_request(req: &HttpRequest) -> Result<i32, Error> {
     let authorization_header = req.headers().get("authorization");
     if authorization_header.is_none() {
-        return Err(Error::msg("Authorization token required"))
-    }    
+        return Err(Error::msg("Authorization token required"));
+    }
     let authorization = String::from(authorization_header.unwrap().to_str().unwrap());
     let token_type = &authorization[0..6];
     if token_type != "Bearer" {
