@@ -4,7 +4,7 @@ use std::fmt;
 
 #[derive(sqlx::Type)]
 #[sqlx(type_name = "transmission_type")]
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 pub enum TransmissionType {
     Manual,
     Automatic,
@@ -21,7 +21,7 @@ impl fmt::Display for TransmissionType {
 
 #[derive(sqlx::Type)]
 #[sqlx(type_name = "fuel_type")]
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 pub enum FuelType {
     Petrol,
     Diesel,
