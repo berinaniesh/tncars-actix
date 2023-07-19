@@ -26,6 +26,7 @@ pub struct JWTResponse {
 
 #[derive(Serialize)]
 pub struct UserOut {
+    pub id: i32,
     pub email: String,
     pub username: Option<String>,
     pub phone: Option<String>,

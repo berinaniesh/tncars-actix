@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::fmt;
+use chrono::{DateTime, Utc};
 
 #[derive(sqlx::Type)]
 #[sqlx(type_name = "transmission_type")]
@@ -38,7 +39,7 @@ impl fmt::Display for FuelType {
     }
 }
 
-#[derive(Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct CreatePost {
     pub title: String,
     pub brand: String,
@@ -49,4 +50,49 @@ pub struct CreatePost {
     pub fuel: FuelType,
     pub description: String,
     pub location: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct CreatePostWithUserId {
+    pub title: String,
+    pub user_id: i32,
+    pub brand: String,
+    pub price: i32,
+    pub model_year: i32,
+    pub km_driven: i32,
+    pub transmission: TransmissionType,
+    pub fuel: FuelType,
+    pub description: String,
+    pub location: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct PostOut {
+    id: i32,
+    title: String,
+    user_id: i32,
+    brand: String,
+    price: i32,
+    model_year: i32,
+    km_driven: i32,
+    transmission: TransmissionType,
+    fuel: FuelType,
+    description: String,
+    location: String,
+    is_sold: bool,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct UpdatePost {
+    pub title: Option<String>,
+    pub brand: Option<String>,
+    pub price: Option<i32>,
+    pub model_year: Option<i32>,
+    pub km_driven: Option<i32>,
+    pub transmission: Option<TransmissionType>,
+    pub fuel: Option<FuelType>,
+    pub description: Option<String>,
+    pub location: Option<String>,
 }

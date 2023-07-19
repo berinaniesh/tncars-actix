@@ -15,12 +15,16 @@ pub fn validate_phone(_phone: String) -> bool {
     return true;
 }
 
-pub fn validate_year(year: i32) -> bool {
+pub fn validate_year(year: i32) -> i32 {
     let current_time = Utc::now();
     let current_year = current_time.year();
     // Modern cars invented in 1886
-    if year > 1886 && year <= current_year {
-        return true;
+    if year >= 1886 && year <= current_year {
+        return year;
     }
-    return false;
+    if year < 1886 {
+        return 1886;
+    } else {
+        return current_year;
+    }
 }
