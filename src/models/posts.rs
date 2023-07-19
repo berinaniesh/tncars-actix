@@ -68,20 +68,20 @@ pub struct CreatePostWithUserId {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct PostOut {
-    id: i32,
-    title: String,
-    user_id: i32,
-    brand: String,
-    price: i32,
-    model_year: i32,
-    km_driven: i32,
-    transmission: TransmissionType,
-    fuel: FuelType,
-    description: String,
-    location: String,
-    is_sold: bool,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>
+    pub id: i32,
+    pub title: String,
+    pub user_id: i32,
+    pub brand: String,
+    pub price: i32,
+    pub model_year: i32,
+    pub km_driven: i32,
+    pub transmission: TransmissionType,
+    pub fuel: FuelType,
+    pub description: String,
+    pub location: String,
+    pub is_sold: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]

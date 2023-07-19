@@ -1,6 +1,8 @@
 use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
-use crate::models::{posts::{CreatePost, CreatePostWithUserId, PostOut, UpdatePost}, Response};
+use crate::models::Response;
+use crate::models::posts::{CreatePost, CreatePostWithUserId, PostOut, UpdatePost};
+use crate::models::posts::{TransmissionType, FuelType};
 use actix_web::{get, post, patch, web, HttpRequest, HttpResponse};
 use crate::misc::utils::get_correct_post_form;
 use crate::misc::utils::get_updated_post;
@@ -19,18 +21,25 @@ pub async fn create_post(
     }
     let user_id = user_id_result.unwrap();
     let form = get_correct_post_form(user_form);
-    let query = sqlx::query_as::<_, PostOut>(
-        "INSERT INTO posts (title, user_id, brand, price, model_year, km_driven, transmission, fuel, description, location) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, title, user_id, brand, price, model_year, km_driven, transmission, fuel, description, location, is_sold, created_at, updated_at") 
-        .bind(&form.title)
-        .bind(user_id)
-        .bind(&form.brand)
-        .bind(&form.price)
-        .bind(&form.model_year)
-        .bind(&form.km_driven)
-        .bind(form.transmission)
-        .bind(form.fuel)
-        .bind(&form.description)
-        .bind(&form.location)
+    let query = sqlx::query_as!(PostOut,
+        r#"
+        INSERT INTO posts 
+        (title, user_id, brand, price, model_year, km_driven, transmission, fuel, description, location)
+        values 
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING
+        id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
+        "#,
+        &form.title,
+        user_id,
+        &form.brand,
+        &form.price,
+        &form.model_year,
+        &form.km_driven,
+        form.transmission as TransmissionType,
+        form.fuel as FuelType,
+        &form.description,
+        &form.location)
         .fetch_one(&app_state.pool)
         .await;
 
@@ -73,7 +82,14 @@ pub async fn update_post(
             message: "Invalid authorization headers".to_string(),
         });
     }
-    let q1 = sqlx::query_as::<_, CreatePostWithUserId>("SELECT title, user_id, brand, price, model_year, km_driven, transmission, fuel, description, location FROM posts WHERE id=$1").bind(post_id).fetch_one(&app_state.pool).await;
+    let q1 = sqlx::query_as!(CreatePostWithUserId,
+        r#"
+        SELECT
+        title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location
+        FROM posts WHERE id=$1
+        "#, post_id)
+        .fetch_one(&app_state.pool).await;
+
     if q1.is_err() {
         return HttpResponse::BadRequest().json(Response {
             message: format!("The requested post id: {} was not found in the database", post_id)
@@ -88,18 +104,23 @@ pub async fn update_post(
         });
     }
     let updated_post = get_updated_post(form, db_data);
-    let q2 = sqlx::query_as::<_, PostOut>(
-        "UPDATE posts set title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9 where id=$10 RETURNING id, title, user_id, brand, price, model_year, km_driven, transmission, fuel, description, location, is_sold, created_at, updated_at")
-        .bind(&updated_post.title)
-        .bind(&updated_post.brand)
-        .bind(&updated_post.price)
-        .bind(&updated_post.model_year)
-        .bind(&updated_post.km_driven)
-        .bind(updated_post.transmission)
-        .bind(updated_post.fuel)
-        .bind(&updated_post.description)
-        .bind(&updated_post.location)
-        .bind(post_id)
+    let q2 = sqlx::query_as!(PostOut,
+        r#"
+        UPDATE posts set 
+        title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9
+        where id=$10 
+        RETURNING id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
+        "#,
+        &updated_post.title,
+        &updated_post.brand,
+        &updated_post.price,
+        &updated_post.model_year,
+        &updated_post.km_driven,
+        updated_post.transmission as TransmissionType,
+        updated_post.fuel as FuelType,
+        &updated_post.description,
+        &updated_post.location,
+        post_id)
         .fetch_one(&app_state.pool)
         .await;
     if q2.is_err() {
