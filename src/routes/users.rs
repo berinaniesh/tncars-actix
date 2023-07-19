@@ -92,7 +92,7 @@ pub async fn refresh_token(req: HttpRequest) -> HttpResponse {
     }
 }
 
-#[get("/users/current_user")]
+#[get("/users/me")]
 pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let user = get_id_from_request(&req);
     match user {
@@ -135,7 +135,7 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
     .fetch_one(&app_state.pool)
     .await;
     if query_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
+        return HttpResponse::NotFound().json(Response {
             message: "User in token not found in database".to_string(),
         });
     }
@@ -165,7 +165,7 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
     }
 }
 
-#[patch("/users/currentuser")]
+#[patch("/users/me")]
 pub async fn update_user(
     req: HttpRequest,
     form: web::Json<UpdateUser>,

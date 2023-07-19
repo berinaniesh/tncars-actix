@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS public.posts_images
     CONSTRAINT posts_images_pkey PRIMARY KEY (id),
     CONSTRAINT post_key FOREIGN KEY (post_id)
         REFERENCES public.posts (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 )
 
 TABLESPACE pg_default;

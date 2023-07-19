@@ -5,7 +5,7 @@ use crate::misc::utils::get_updated_post;
 use crate::models::posts::{CreatePost, PostOut, UpdatePost, UpdatedPost};
 use crate::models::posts::{FuelType, TransmissionType};
 use crate::models::Response;
-use actix_web::{get, patch, post, web, HttpRequest, HttpResponse};
+use actix_web::{get, patch, post, delete, web, HttpRequest, HttpResponse};
 
 #[post("/posts")]
 pub async fn create_post(
@@ -63,8 +63,8 @@ pub async fn get_post(app_state: web::Data<AppState>, path: web::Path<i32>) -> H
     if query.is_ok() {
         return HttpResponse::Ok().json(query.unwrap());
     }
-    return HttpResponse::BadRequest().json(Response {
-        message: format!("Post with id: {} not found", post_id),
+    return HttpResponse::NotFound().json(Response {
+        message: format!("Post with id: {} was not found", post_id),
     });
 }
 
@@ -91,9 +91,9 @@ pub async fn update_post(
         .fetch_one(&app_state.pool).await;
 
     if q1.is_err() {
-        return HttpResponse::BadRequest().json(Response {
+        return HttpResponse::NotFound().json(Response {
             message: format!(
-                "The requested post id: {} was not found in the database",
+                "Post with id: {} was not found in the database",
                 post_id
             ),
         });
@@ -134,4 +134,49 @@ pub async fn update_post(
     }
     let postout = q2.unwrap();
     return HttpResponse::Ok().json(postout);
+}
+
+#[delete("/posts/{id}")]
+pub async fn delete_post(
+    req: HttpRequest,
+    app_state: web::Data<AppState>,
+    path: web::Path<i32>,
+) -> HttpResponse {
+    let post_id = path.into_inner();
+    let user_id_result = get_id_from_request(&req);
+    if user_id_result.is_err() {
+        return HttpResponse::BadRequest().json(Response {
+            message: "Invalid authorization headers".to_string(),
+        });
+    }
+    let q1 = sqlx::query!(
+        r#"
+        SELECT user_id FROM posts WHERE id=$1
+        "#, post_id)
+        .fetch_one(&app_state.pool).await;
+
+    if q1.is_err() {
+        return HttpResponse::NotFound().json(Response {
+            message: format!(
+                "Post with id: {} was not found in the database",
+                post_id
+            ),
+        });
+    }
+    let req_user = user_id_result.unwrap();
+    let db_user = q1.unwrap().user_id;
+    if req_user != db_user {
+        return HttpResponse::Unauthorized().json(Response {
+            message: "You cannot delete someone else's post".to_string(),
+        });
+    }
+    let delete_req = sqlx::query!("DELETE FROM posts WHERE id=$1", post_id).execute(&app_state.pool).await;
+    if delete_req.is_err() {
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong".to_string()
+        });
+    }
+    return HttpResponse::Ok().json(Response {
+        message: "Post deleted successfully".to_string()
+    });
 }

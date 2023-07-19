@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS public.email_otp
         INCLUDE(verify_url),
     CONSTRAINT user_link FOREIGN KEY (user_id)
         REFERENCES public.users (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 )
 
 TABLESPACE pg_default;
