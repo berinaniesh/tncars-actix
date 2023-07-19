@@ -2221,6 +2221,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "env_logger",
+ "heck",
  "jsonwebtoken",
  "lettre",
  "rand",

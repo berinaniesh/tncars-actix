@@ -20,6 +20,7 @@ argon2 = "0.5.1"
 chrono = { version = "0.4.26", features = ["serde"] }
 dotenvy = "0.15.7"
 env_logger = "0.10.0"
+heck = { version = "0.4.1", features = ["unicode"] }
 jsonwebtoken = "8.3.0"
 lettre = "0.10.4"
 rand = "0.8.5"
