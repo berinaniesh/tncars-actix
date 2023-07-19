@@ -7,14 +7,20 @@ CREATE SEQUENCE posts_id_seq
     NO MAXVALUE
     CACHE 1;
 
+CREATE TYPE transmission_type AS ENUM ('Manual', 'Automatic', 'NotApplicable');
+CREATE TYPE fuel_type AS ENUM ('Petrol', 'Diesel', 'CNG', 'Electric', 'Other');
+
 CREATE TABLE IF NOT EXISTS public.posts
 (
     id integer NOT NULL DEFAULT nextval('posts_id_seq'::regclass),
     title character varying COLLATE pg_catalog."default" NOT NULL,
     user_id integer NOT NULL,
+    brand character varying COLLATE pg_catalog."default" NOT NULL,
     price integer NOT NULL,
     model_year integer NOT NULL,
     km_driven integer NOT NULL,
+    transmission transmission_type NOT NULL,
+    fuel fuel_type NOT NULL,
     description text COLLATE pg_catalog."default" NOT NULL,
     location character varying COLLATE pg_catalog."default" NOT NULL,
     is_sold boolean NOT NULL DEFAULT false,
