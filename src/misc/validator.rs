@@ -1,5 +1,5 @@
+use chrono::{Datelike, Utc};
 use regex::Regex;
-use chrono::{Utc, Datelike};
 
 pub fn validate_email(email: &String) -> bool {
     let email_regex: Regex = Regex::new(

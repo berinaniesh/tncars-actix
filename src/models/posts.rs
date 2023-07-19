@@ -1,7 +1,7 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::fmt;
-use chrono::{DateTime, Utc};
 
 #[derive(sqlx::Type)]
 #[sqlx(type_name = "transmission_type")]
@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 pub enum TransmissionType {
     Manual,
     Automatic,
-    NotApplicable
+    NotApplicable,
 }
 
 impl fmt::Display for TransmissionType {
@@ -53,7 +53,7 @@ pub struct CreatePost {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct CreatePostWithUserId {
+pub struct UpdatedPost {
     pub title: String,
     pub user_id: i32,
     pub brand: String,
@@ -64,6 +64,7 @@ pub struct CreatePostWithUserId {
     pub fuel: FuelType,
     pub description: String,
     pub location: String,
+    pub is_sold: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -81,7 +82,7 @@ pub struct PostOut {
     pub location: String,
     pub is_sold: bool,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -95,4 +96,5 @@ pub struct UpdatePost {
     pub fuel: Option<FuelType>,
     pub description: Option<String>,
     pub location: Option<String>,
+    pub is_sold: Option<bool>,
 }

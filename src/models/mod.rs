@@ -1,7 +1,7 @@
 pub mod hello;
+pub mod posts;
 pub mod users;
 pub mod verify;
-pub mod posts;
 
 use serde::Serialize;
 

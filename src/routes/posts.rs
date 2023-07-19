@@ -1,11 +1,11 @@
 use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
-use crate::models::Response;
-use crate::models::posts::{CreatePost, CreatePostWithUserId, PostOut, UpdatePost};
-use crate::models::posts::{TransmissionType, FuelType};
-use actix_web::{get, post, patch, web, HttpRequest, HttpResponse};
 use crate::misc::utils::get_correct_post_form;
 use crate::misc::utils::get_updated_post;
+use crate::models::posts::{CreatePost, PostOut, UpdatePost, UpdatedPost};
+use crate::models::posts::{FuelType, TransmissionType};
+use crate::models::Response;
+use actix_web::{get, patch, post, web, HttpRequest, HttpResponse};
 
 #[post("/posts")]
 pub async fn create_post(
@@ -82,17 +82,20 @@ pub async fn update_post(
             message: "Invalid authorization headers".to_string(),
         });
     }
-    let q1 = sqlx::query_as!(CreatePostWithUserId,
+    let q1 = sqlx::query_as!(UpdatedPost,
         r#"
         SELECT
-        title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location
+        title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold
         FROM posts WHERE id=$1
         "#, post_id)
         .fetch_one(&app_state.pool).await;
 
     if q1.is_err() {
         return HttpResponse::BadRequest().json(Response {
-            message: format!("The requested post id: {} was not found in the database", post_id)
+            message: format!(
+                "The requested post id: {} was not found in the database",
+                post_id
+            ),
         });
     }
     let db_data = q1.unwrap();
@@ -100,15 +103,15 @@ pub async fn update_post(
     let user_id_jwt: i32 = user_id_result.unwrap();
     if user_id_db != user_id_jwt {
         return HttpResponse::Unauthorized().json(Response {
-            message: "You cannot modify someone else's post".to_string()
+            message: "You cannot modify someone else's post".to_string(),
         });
     }
     let updated_post = get_updated_post(form, db_data);
     let q2 = sqlx::query_as!(PostOut,
         r#"
         UPDATE posts set 
-        title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9
-        where id=$10 
+        title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9, is_sold=$10
+        where id=$11 
         RETURNING id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
         "#,
         &updated_post.title,
@@ -120,12 +123,13 @@ pub async fn update_post(
         updated_post.fuel as FuelType,
         &updated_post.description,
         &updated_post.location,
+        &updated_post.is_sold,
         post_id)
         .fetch_one(&app_state.pool)
         .await;
     if q2.is_err() {
         return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string()
+            message: "Something went wrong, try again later".to_string(),
         });
     }
     let postout = q2.unwrap();

@@ -1,8 +1,8 @@
-use rand::distributions::{Alphanumeric, DistString};
-use actix_web::web;
-use crate::models::posts::{CreatePost, CreatePostWithUserId, UpdatePost, TransmissionType, FuelType};
-use heck::AsTitleCase;
 use crate::misc::validator::validate_year;
+use crate::models::posts::{CreatePost, FuelType, TransmissionType, UpdatePost, UpdatedPost};
+use actix_web::web;
+use heck::AsTitleCase;
+use rand::distributions::{Alphanumeric, DistString};
 
 pub fn generate_otp() -> String {
     let string = Alphanumeric
@@ -34,11 +34,22 @@ pub fn get_correct_post_form(form: web::Json<CreatePost>) -> CreatePost {
     let description = form.description.trim().to_string();
     let location = AsTitleCase(form.location.trim()).to_string();
 
-    return CreatePost{title: title, brand: brand, price: price, model_year: model_year, km_driven: km_driven, transmission: transmission, fuel: fuel, description: description, location: location};
+    return CreatePost {
+        title: title,
+        brand: brand,
+        price: price,
+        model_year: model_year,
+        km_driven: km_driven,
+        transmission: transmission,
+        fuel: fuel,
+        description: description,
+        location: location,
+    };
 }
 
-pub fn get_updated_post(form: web::Json<UpdatePost>, db_data: CreatePostWithUserId) -> CreatePost {
+pub fn get_updated_post(form: web::Json<UpdatePost>, db_data: UpdatedPost) -> UpdatedPost {
     let title: String;
+    let user_id: i32 = db_data.user_id;
     let brand: String;
     let price: i32;
     let model_year: i32;
@@ -47,6 +58,7 @@ pub fn get_updated_post(form: web::Json<UpdatePost>, db_data: CreatePostWithUser
     let fuel: FuelType;
     let description: String;
     let location: String;
+    let is_sold: bool;
 
     if form.title.is_some() {
         title = make_first_letter_capital(form.title.as_ref().unwrap().trim().to_string());
@@ -102,5 +114,22 @@ pub fn get_updated_post(form: web::Json<UpdatePost>, db_data: CreatePostWithUser
         location = db_data.location;
     }
 
-    return CreatePost{title: title, brand: brand, price: price, model_year: model_year, km_driven: km_driven, transmission: transmission, fuel: fuel, description: description, location: location};
+    if form.is_sold.is_some() {
+        is_sold = form.is_sold.unwrap();
+    } else {
+        is_sold = db_data.is_sold;
+    }
+    return UpdatedPost {
+        title: title,
+        user_id: user_id,
+        brand: brand,
+        price: price,
+        model_year: model_year,
+        km_driven: km_driven,
+        transmission: transmission,
+        fuel: fuel,
+        description: description,
+        location: location,
+        is_sold: is_sold,
+    };
 }
