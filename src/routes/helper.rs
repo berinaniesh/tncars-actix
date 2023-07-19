@@ -2,7 +2,7 @@ use crate::misc::appstate::AppState;
 use crate::misc::constants::OTP_EXPIRY;
 use crate::misc::email::send_email;
 use crate::misc::utils::{generate_otp, generate_verify_url};
-use crate::misc::utils::{validate_email, validate_phone};
+use crate::misc::validator::{validate_email, validate_phone};
 use crate::models::users::{UpdateUser, UserOut};
 use crate::models::Response;
 use actix_web::{web, HttpResponse};

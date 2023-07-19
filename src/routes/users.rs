@@ -1,7 +1,7 @@
 use crate::misc::appstate::AppState;
 use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
-use crate::misc::utils::validate_email;
+use crate::misc::validator::validate_email;
 use crate::models::users::{
     CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut,
 };
@@ -179,7 +179,7 @@ pub async fn update_user(
     }
     let user_id = user_id_result.unwrap();
     let updated_user = get_updated_user(user_id, &form, &app_state).await;
-    let q = sqlx::query!("UPDATE users set email=$1, username=$2, phone=$3, bio=$4, address=$5, email_verified=$6, phone_verified=$7", updated_user.email, updated_user.username, updated_user.phone, updated_user.bio, updated_user.address, updated_user.email_verified, updated_user.phone_verified).execute(&app_state.pool).await;
+    let q = sqlx::query!("UPDATE users set email=$1, username=$2, phone=$3, bio=$4, address=$5, email_verified=$6, phone_verified=$7 WHERE id=$8", updated_user.email, updated_user.username, updated_user.phone, updated_user.bio, updated_user.address, updated_user.email_verified, updated_user.phone_verified, user_id).execute(&app_state.pool).await;
     if q.is_err() {
         HttpResponse::InternalServerError().json(Response {
             message: "Something went wrong, try again later".to_string(),

@@ -38,6 +38,7 @@ impl TNCarsApp {
                 .service(routes::verify::email_otp)
                 .service(routes::verify::email_url)
                 .service(routes::users::update_user)
+                .service(routes::posts::create_post)
         })
         .bind(("127.0.0.1", port))?
         .run()
