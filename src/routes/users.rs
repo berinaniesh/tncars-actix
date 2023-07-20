@@ -230,6 +230,8 @@ pub async fn delete_user(req: HttpRequest, app_state: web::Data<AppState>) -> Ht
     });
 }
 
+
+// Undelete needs a different implementation. This doesn't work. 
 #[get("/users/undelete")]
 pub async fn undelete_user(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let user_id_result = get_id_from_request(&req, &app_state);
