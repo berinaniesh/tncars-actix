@@ -13,13 +13,16 @@ pub async fn email_otp(
     path: web::Path<String>,
 ) -> HttpResponse {
     let otp = path.into_inner();
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
-    let user_id = user_id_result.unwrap();
     let verify_result = sqlx::query_as!(
         EmailVerOtp,
         "SELECT user_id, otp, expires_at FROM email_otp WHERE user_id=$1",

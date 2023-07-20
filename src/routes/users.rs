@@ -76,9 +76,9 @@ pub async fn login_user(
 }
 
 #[get("/users/refreshtoken")]
-pub async fn refresh_token(req: HttpRequest) -> HttpResponse {
-    let user = get_id_from_request(&req);
-    match user {
+pub async fn refresh_token(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
+    let user_id_result = get_id_from_request(&req, &app_state);
+    match user_id_result.await {
         Ok(val) => {
             let token = generate_token(val).unwrap();
             let response = JWTResponse { jwt: token };
@@ -94,8 +94,8 @@ pub async fn refresh_token(req: HttpRequest) -> HttpResponse {
 
 #[get("/users/me")]
 pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
-    let user = get_id_from_request(&req);
-    match user {
+    let user_id_result = get_id_from_request(&req, &app_state);
+    match user_id_result.await {
         Ok(val) => {
             let user_result = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at FROM users WHERE id=$1", val).fetch_one(&app_state.pool).await;
             match user_result {
@@ -103,8 +103,8 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
                     return HttpResponse::Ok().json(user);
                 }
                 Err(_) => {
-                    return HttpResponse::BadRequest().json(Response {
-                        message: "It's a valid bearer token, but the user could not be found in the database.".to_string(),
+                    return HttpResponse::InternalServerError().json(Response {
+                        message: "Something went wrong, try again later".to_string(),
                     });
                 }
             }
@@ -119,33 +119,30 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
 
 #[get("/users/emailotp")]
 pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
-    let user_id = user_id_result.unwrap();
 
     let query_result = sqlx::query_as!(
         EmailOTP,
-        "SELECT id, email, email_verified, is_active FROM users WHERE id=$1",
+        "SELECT id, email, email_verified FROM users WHERE id=$1",
         user_id
     )
     .fetch_one(&app_state.pool)
     .await;
     if query_result.is_err() {
-        return HttpResponse::NotFound().json(Response {
-            message: "User in token not found in database".to_string(),
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
         });
     }
     let user = query_result.unwrap();
-
-    if !user.is_active {
-        return HttpResponse::Unauthorized().json(Response {
-            message: "User is inactive, contact admin to get the problem resolved".to_string(),
-        });
-    }
 
     if user.email_verified {
         return HttpResponse::BadRequest().json(Response {
@@ -171,13 +168,16 @@ pub async fn update_user(
     form: web::Json<UpdateUser>,
     app_state: web::Data<AppState>,
 ) -> HttpResponse {
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
-    let user_id = user_id_result.unwrap();
     let updated_user = get_updated_user(user_id, &form, &app_state).await;
     let q = sqlx::query_as!(UserOut, "UPDATE users set email=$1, username=$2, phone=$3, bio=$4, address=$5, email_verified=$6, phone_verified=$7 WHERE id=$8 RETURNING id, email, username, phone, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at", updated_user.email, updated_user.username, updated_user.phone, updated_user.bio, updated_user.address, updated_user.email_verified, updated_user.phone_verified, user_id).fetch_one(&app_state.pool).await;
     if q.is_err() {
@@ -193,13 +193,16 @@ pub async fn delete_user(
     req: HttpRequest,
     app_state: web::Data<AppState>
 ) -> HttpResponse {
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
-    let user_id = user_id_result.unwrap();
     let q2 = sqlx::query!("SELECT id from delete_users where user_id=$1", user_id).fetch_one(&app_state.pool).await;
     if q2.is_ok() {
         return HttpResponse::BadRequest().json(Response{
@@ -222,13 +225,17 @@ pub async fn undelete_user(
     req: HttpRequest,
     app_state: web::Data<AppState>
 ) -> HttpResponse {
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
-    let user_id = user_id_result.unwrap();
+    // Check this function if the user can request for undeletion if he is inactive
     let q2 = sqlx::query!("SELECT id from delete_users where user_id=$1", user_id).fetch_one(&app_state.pool).await;
     if q2.is_err() {
         return HttpResponse::BadRequest().json(Response{

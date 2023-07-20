@@ -1,5 +1,6 @@
 use crate::misc::constants::JWT_EXPIRY;
-use actix_web::HttpRequest;
+use actix_web::{web, HttpRequest};
+use crate::misc::appstate::AppState;
 use anyhow::Error;
 use chrono::Utc;
 use jsonwebtoken;
@@ -47,7 +48,7 @@ fn get_id_from_token(token: String) -> Result<i32, Error> {
     return Ok(token_data.claims.user_id);
 }
 
-pub fn get_id_from_request(req: &HttpRequest) -> Result<i32, Error> {
+pub async fn get_id_from_request(req: &HttpRequest, app_state: &web::Data<AppState>) -> Result<i32, Error> {
     let authorization_header = req.headers().get("authorization");
     if authorization_header.is_none() {
         return Err(Error::msg("Authorization token required"));
@@ -63,5 +64,13 @@ pub fn get_id_from_request(req: &HttpRequest) -> Result<i32, Error> {
         return Err(Error::msg("Bad Token"));
     }
     let user_id = user_id_result.unwrap();
+    let user_active_query = sqlx::query!("SELECT is_active from users where id=$1", user_id).fetch_one(&app_state.pool).await;
+    if user_active_query.is_err() {
+        return Err(Error::msg("User not found in database"));
+    }
+    let user_active = user_active_query.unwrap().is_active;
+    if !user_active {
+        return Err(Error::msg("User account deactivated, it is scheduled for deletion or banned"));
+    }
     return Ok(user_id);
 }

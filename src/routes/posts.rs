@@ -13,13 +13,16 @@ pub async fn create_post(
     app_state: web::Data<AppState>,
     user_form: web::Json<CreatePost>,
 ) -> HttpResponse {
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
-    let user_id = user_id_result.unwrap();
     let form = get_correct_post_form(user_form);
     let query = sqlx::query_as!(PostOut,
         r#"
@@ -54,9 +57,10 @@ pub async fn create_post(
 #[get("/posts/{id}")]
 pub async fn get_post(app_state: web::Data<AppState>, path: web::Path<i32>) -> HttpResponse {
     let post_id = path.into_inner();
-    let query = sqlx::query_as::<_, PostOut>(
-        "SELECT id, title, user_id, brand, price, model_year, km_driven, transmission, fuel, description, location, is_sold, created_at, updated_at FROM posts where id=$1") 
-        .bind(post_id)
+    let query = sqlx::query_as!(PostOut,
+        r#"
+        SELECT id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at FROM posts where id=$1
+        "#, post_id) 
         .fetch_one(&app_state.pool)
         .await;
 
@@ -76,11 +80,15 @@ pub async fn update_post(
     path: web::Path<i32>,
 ) -> HttpResponse {
     let post_id = path.into_inner();
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
     let q1 = sqlx::query_as!(UpdatedPost,
         r#"
@@ -100,7 +108,7 @@ pub async fn update_post(
     }
     let db_data = q1.unwrap();
     let user_id_db = db_data.user_id;
-    let user_id_jwt: i32 = user_id_result.unwrap();
+    let user_id_jwt: i32 = user_id;
     if user_id_db != user_id_jwt {
         return HttpResponse::Unauthorized().json(Response {
             message: "You cannot modify someone else's post".to_string(),
@@ -143,12 +151,17 @@ pub async fn delete_post(
     path: web::Path<i32>,
 ) -> HttpResponse {
     let post_id = path.into_inner();
-    let user_id_result = get_id_from_request(&req);
-    if user_id_result.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "Invalid authorization headers".to_string(),
-        });
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {user_id = id;},
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response{
+                message: e.to_string()
+            });
+        }
     }
+
     let q1 = sqlx::query!(
         r#"
         SELECT user_id FROM posts WHERE id=$1
@@ -163,7 +176,7 @@ pub async fn delete_post(
             ),
         });
     }
-    let req_user = user_id_result.unwrap();
+    let req_user = user_id;
     let db_user = q1.unwrap().user_id;
     if req_user != db_user {
         return HttpResponse::Unauthorized().json(Response {
