@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.users
 (
     id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
     email character varying COLLATE pg_catalog."default" NOT NULL,
-    username character varying COLLATE pg_catalog."default",
+    username character varying COLLATE pg_catalog."default" NOT NULL,
     password character varying COLLATE pg_catalog."default" NOT NULL,
     phone character varying COLLATE pg_catalog."default",
     bio character varying COLLATE pg_catalog."default",
@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS public.users
     is_active boolean NOT NULL DEFAULT true,
     CONSTRAINT users_pkey PRIMARY KEY (id),
     CONSTRAINT email_unique UNIQUE (email),
+    CONSTRAINT username_unique UNIQUE (username),
     CONSTRAINT phone_unique UNIQUE (phone)
-        INCLUDE(phone)
 )
 
 TABLESPACE pg_default;

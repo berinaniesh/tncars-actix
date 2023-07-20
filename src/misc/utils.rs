@@ -1,3 +1,4 @@
+use crate::misc::appstate::AppState;
 use crate::misc::validator::validate_year;
 use crate::models::posts::{CreatePost, FuelType, TransmissionType, UpdatePost, UpdatedPost};
 use actix_web::web;
@@ -132,4 +133,15 @@ pub fn get_updated_post(form: web::Json<UpdatePost>, db_data: UpdatedPost) -> Up
         location: location,
         is_sold: is_sold,
     };
+}
+
+pub async fn is_available_username(s: &String, app_state: &web::Data<AppState>) -> bool {
+    let query = sqlx::query!("SELECT id FROM users WHERE username=$1", s)
+        .fetch_one(&app_state.pool)
+        .await;
+    if query.is_err() {
+        return true;
+    } else {
+        return false;
+    }
 }

@@ -1,7 +1,7 @@
 use crate::misc::appstate::AppState;
 use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
-use crate::misc::validator::validate_email;
+use crate::misc::validator::{get_valid_username, validate_email};
 use crate::models::users::{
     CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut,
 };
@@ -19,10 +19,18 @@ pub async fn create_user(
             message: "Enter a valid email address".to_string(),
         });
     }
+    let username_result = get_valid_username(&form.username);
+    if username_result.is_none() {
+        return HttpResponse::BadRequest().json(Response {
+            message: "Username invalid".to_string(),
+        });
+    }
+    let username = username_result.unwrap();
     let hashed_pw = hash(&form.password);
-    let created = sqlx::query!(
-        "INSERT INTO users (email, password) values ($1, $2) RETURNING *",
+    let created = sqlx::query_as!(UserOut,
+        "INSERT INTO users (email, username, password) values ($1, $2, $3) RETURNING id, email, username, phone, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at",
         &form.email,
+        username,
         &hashed_pw
     )
     .fetch_one(&app_state.pool)
@@ -32,9 +40,7 @@ pub async fn create_user(
             message: "User already exists".to_string(),
         });
     }
-    return HttpResponse::Created().json(Response {
-        message: "User created successfully".to_string(),
-    });
+    return HttpResponse::Created().json(created.unwrap());
 }
 
 #[get("/users/login")]
@@ -43,15 +49,27 @@ pub async fn login_user(
     form: web::Json<LoginUser>,
 ) -> HttpResponse {
     let error_response = HttpResponse::BadRequest().json(Response {
-        message: "Login unsuccessful, wrong email or password".to_string(),
+        message: "Login unsuccessful, wrong email or username or password".to_string(),
     });
-    let pw_result = sqlx::query_as!(
-        IdPassword,
-        "SELECT id, password FROM users WHERE email=$1",
-        &form.email
-    )
-    .fetch_one(&app_state.pool)
-    .await;
+    let pw_result;
+    if validate_email(&form.credential) {
+        pw_result = sqlx::query_as!(
+            IdPassword,
+            "SELECT id, password FROM users WHERE email=$1",
+            &form.credential
+        )
+        .fetch_one(&app_state.pool)
+        .await;
+    } else {
+        let username = get_valid_username(&form.credential);
+        pw_result = sqlx::query_as!(
+            IdPassword,
+            "SELECT id, password FROM users WHERE username=$1",
+            username
+        )
+        .fetch_one(&app_state.pool)
+        .await;
+    }
 
     if pw_result.is_err() {
         // Wrong password check takes time as it verifies the hash using argon2
@@ -164,6 +182,7 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
     }
 }
 
+// If a wrong username is given by the user, this endpoint just ignores that specific input
 #[patch("/users/me")]
 pub async fn update_user(
     req: HttpRequest,
@@ -230,8 +249,7 @@ pub async fn delete_user(req: HttpRequest, app_state: web::Data<AppState>) -> Ht
     });
 }
 
-
-// Undelete needs a different implementation. This doesn't work. 
+// Undelete needs a different implementation. This doesn't work.
 #[get("/users/undelete")]
 pub async fn undelete_user(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let user_id_result = get_id_from_request(&req, &app_state);

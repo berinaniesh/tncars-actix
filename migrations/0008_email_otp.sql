@@ -18,8 +18,7 @@ CREATE TABLE IF NOT EXISTS public.email_otp
     expires_at timestamp with time zone NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT email_otp_pkey PRIMARY KEY (id),
-    CONSTRAINT email_otp_verify_url_verify_url1_key UNIQUE (verify_url)
-        INCLUDE(verify_url),
+    CONSTRAINT email_otp_verify_url_verify_url1_key UNIQUE (verify_url),
     CONSTRAINT user_link FOREIGN KEY (user_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE CASCADE

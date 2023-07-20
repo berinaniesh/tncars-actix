@@ -1,7 +1,9 @@
 use crate::misc::appstate::AppState;
 use crate::misc::constants::OTP_EXPIRY;
 use crate::misc::email::send_email;
+use crate::misc::utils::is_available_username;
 use crate::misc::utils::{generate_otp, generate_verify_url};
+use crate::misc::validator::get_valid_username;
 use crate::misc::validator::{validate_email, validate_phone};
 use crate::models::users::{UpdateUser, UserOut};
 use crate::models::Response;
@@ -68,6 +70,17 @@ pub async fn get_updated_user(
         }
     }
 
+    if form.username.is_some() {
+        let form_username = form.username.as_ref().unwrap();
+        let proper_form_username = get_valid_username(&form_username);
+        if proper_form_username.is_some() {
+            let pfu = proper_form_username.unwrap();
+            if is_available_username(&pfu, &app_state).await {
+                user_out.username = pfu;
+            }
+        }
+    }
+
     if form.phone.is_some() {
         let form_phone = form.phone.as_ref().unwrap();
         if validate_phone(form_phone.to_string()) {
@@ -81,10 +94,6 @@ pub async fn get_updated_user(
                 }
             }
         }
-    }
-
-    if form.username.is_some() {
-        user_out.username = Some(form.username.as_ref().unwrap().to_string());
     }
 
     if form.bio.is_some() {

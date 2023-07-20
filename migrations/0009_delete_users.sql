@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS public.delete_users
     user_id integer NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT delete_users_pkey PRIMARY KEY (id),
-    CONSTRAINT user_unique UNIQUE (user_id)
-        INCLUDE(user_id),
+    CONSTRAINT user_unique UNIQUE (user_id),
     CONSTRAINT user_link FOREIGN KEY (user_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE CASCADE

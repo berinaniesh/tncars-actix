@@ -28,3 +28,14 @@ pub fn validate_year(year: i32) -> i32 {
         return current_year;
     }
 }
+
+pub fn get_valid_username(st: &String) -> Option<String> {
+    let s = String::from(st.trim());
+    if s.is_empty() {
+        return None;
+    }
+    if s.is_ascii() {
+        return Some(s.to_lowercase());
+    };
+    return Some(s);
+}

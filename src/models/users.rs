@@ -4,12 +4,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize)]
 pub struct CreateUser {
     pub email: String,
+    pub username: String,
     pub password: String,
 }
 
 #[derive(Deserialize)]
 pub struct LoginUser {
-    pub email: String,
+    pub credential: String,
     pub password: String,
 }
 
@@ -28,7 +29,7 @@ pub struct JWTResponse {
 pub struct UserOut {
     pub id: i32,
     pub email: String,
-    pub username: Option<String>,
+    pub username: String,
     pub phone: Option<String>,
     pub bio: Option<String>,
     pub address: Option<String>,
