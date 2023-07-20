@@ -265,7 +265,7 @@ pub async fn undelete_user(req: HttpRequest, app_state: web::Data<AppState>) -> 
         }
     }
     // Check this function if the user can request for undeletion if he is inactive
-    let q2 = sqlx::query!("SELECT id from delete_users where user_id=$1", user_id)
+    let q2 = sqlx::query!("SELECT id FROM delete_users WHERE user_id=$1", user_id)
         .fetch_one(&app_state.pool)
         .await;
     if q2.is_err() {
