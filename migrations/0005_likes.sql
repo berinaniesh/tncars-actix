@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.likes
     id integer NOT NULL DEFAULT nextval('likes_id_seq'::regclass),
     user_id integer NOT NULL,
     post_id integer NOT NULL,
+    UNIQUE (user_id, post_id),
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT likes_pkey PRIMARY KEY (id),
     CONSTRAINT post_link FOREIGN KEY (post_id)
