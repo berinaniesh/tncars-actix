@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS public.comments;
+-- DROP TABLE IF EXISTS public.comments;
 
 CREATE SEQUENCE comments_id_seq
     START WITH 1

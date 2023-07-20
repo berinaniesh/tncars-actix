@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS public.posts;
+-- DROP TABLE IF EXISTS public.posts;
 
 CREATE SEQUENCE posts_id_seq
     START WITH 1

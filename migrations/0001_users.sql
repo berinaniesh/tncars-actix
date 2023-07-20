@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS public.users;
+-- DROP TABLE IF EXISTS public.users;
 
 CREATE SEQUENCE users_id_seq
     START WITH 1

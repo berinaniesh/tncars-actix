@@ -1,6 +1,6 @@
 -- Table: public.email_otp
 
-DROP TABLE IF EXISTS public.email_otp;
+-- DROP TABLE IF EXISTS public.email_otp;
 
 CREATE SEQUENCE email_otp_id_seq
     START WITH 1

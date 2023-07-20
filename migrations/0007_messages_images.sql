@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS public.messages_images;
+-- DROP TABLE IF EXISTS public.messages_images;
 
 CREATE SEQUENCE messages_images_id_seq
     START WITH 1

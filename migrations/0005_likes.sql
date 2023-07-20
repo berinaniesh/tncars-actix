@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS public.likes;
+-- DROP TABLE IF EXISTS public.likes;
 
 CREATE SEQUENCE likes_id_seq
     START WITH 1
