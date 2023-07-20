@@ -5,7 +5,7 @@ use crate::misc::utils::get_updated_post;
 use crate::models::posts::{CreatePost, PostOut, UpdatePost, UpdatedPost};
 use crate::models::posts::{FuelType, TransmissionType};
 use crate::models::Response;
-use actix_web::{get, patch, post, delete, web, HttpRequest, HttpResponse};
+use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 
 #[post("/posts")]
 pub async fn create_post(
@@ -16,10 +16,12 @@ pub async fn create_post(
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
@@ -83,10 +85,12 @@ pub async fn update_post(
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
@@ -100,10 +104,7 @@ pub async fn update_post(
 
     if q1.is_err() {
         return HttpResponse::NotFound().json(Response {
-            message: format!(
-                "Post with id: {} was not found in the database",
-                post_id
-            ),
+            message: format!("Post with id: {} was not found in the database", post_id),
         });
     }
     let db_data = q1.unwrap();
@@ -154,10 +155,12 @@ pub async fn delete_post(
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
@@ -165,15 +168,15 @@ pub async fn delete_post(
     let q1 = sqlx::query!(
         r#"
         SELECT user_id FROM posts WHERE id=$1
-        "#, post_id)
-        .fetch_one(&app_state.pool).await;
+        "#,
+        post_id
+    )
+    .fetch_one(&app_state.pool)
+    .await;
 
     if q1.is_err() {
         return HttpResponse::NotFound().json(Response {
-            message: format!(
-                "Post with id: {} was not found in the database",
-                post_id
-            ),
+            message: format!("Post with id: {} was not found in the database", post_id),
         });
     }
     let req_user = user_id;
@@ -183,13 +186,15 @@ pub async fn delete_post(
             message: "You cannot delete someone else's post".to_string(),
         });
     }
-    let delete_req = sqlx::query!("DELETE FROM posts WHERE id=$1", post_id).execute(&app_state.pool).await;
+    let delete_req = sqlx::query!("DELETE FROM posts WHERE id=$1", post_id)
+        .execute(&app_state.pool)
+        .await;
     if delete_req.is_err() {
         return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong".to_string()
+            message: "Something went wrong".to_string(),
         });
     }
     return HttpResponse::Ok().json(Response {
-        message: "Post deleted successfully".to_string()
+        message: "Post deleted successfully".to_string(),
     });
 }

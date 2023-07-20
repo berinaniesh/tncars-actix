@@ -7,7 +7,7 @@ use crate::models::users::{
 };
 use crate::models::Response;
 use crate::routes::helper::{create_otp_and_and_send_email, get_updated_user};
-use actix_web::{get, patch, post, delete, web, HttpRequest, HttpResponse};
+use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 
 #[post("/users")]
 pub async fn create_user(
@@ -122,10 +122,12 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
@@ -171,10 +173,12 @@ pub async fn update_user(
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
@@ -189,67 +193,76 @@ pub async fn update_user(
 }
 
 #[delete("/users/me")]
-pub async fn delete_user(
-    req: HttpRequest,
-    app_state: web::Data<AppState>
-) -> HttpResponse {
+pub async fn delete_user(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
-    let q2 = sqlx::query!("SELECT id from delete_users where user_id=$1", user_id).fetch_one(&app_state.pool).await;
+    let q2 = sqlx::query!("SELECT id from delete_users where user_id=$1", user_id)
+        .fetch_one(&app_state.pool)
+        .await;
     if q2.is_ok() {
-        return HttpResponse::BadRequest().json(Response{
-            message: "Your account is already queued for deletion".to_string()
+        return HttpResponse::BadRequest().json(Response {
+            message: "Your account is already queued for deletion".to_string(),
         });
     }
-    let q = sqlx::query!("INSERT INTO delete_users (user_id) values ($1)", user_id).execute(&app_state.pool).await;
-    if q.is_err() {
+    let q = sqlx::query!("INSERT INTO delete_users (user_id) values ($1)", user_id)
+        .execute(&app_state.pool)
+        .await;
+    let q3 = sqlx::query!("UPDATE users SET is_active='f' WHERE id=$1", user_id)
+        .execute(&app_state.pool)
+        .await;
+    if q.is_err() || q3.is_err() {
         return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string()
+            message: "Something went wrong, try again later".to_string(),
         });
     }
-    return HttpResponse::Ok().json(Response{
-        message: "Your account is queued for deletion".to_string()
+    return HttpResponse::Ok().json(Response {
+        message: "Your account is queued for deletion".to_string(),
     });
 }
 
 #[get("/users/undelete")]
-pub async fn undelete_user(
-    req: HttpRequest,
-    app_state: web::Data<AppState>
-) -> HttpResponse {
+pub async fn undelete_user(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
     // Check this function if the user can request for undeletion if he is inactive
-    let q2 = sqlx::query!("SELECT id from delete_users where user_id=$1", user_id).fetch_one(&app_state.pool).await;
+    let q2 = sqlx::query!("SELECT id from delete_users where user_id=$1", user_id)
+        .fetch_one(&app_state.pool)
+        .await;
     if q2.is_err() {
-        return HttpResponse::BadRequest().json(Response{
-            message: "Your account is not queued for deletion".to_string()
+        return HttpResponse::BadRequest().json(Response {
+            message: "Your account is not queued for deletion".to_string(),
         });
     }
-    let q = sqlx::query!("DELETE from delete_users where user_id=$1", user_id).execute(&app_state.pool).await;
+    let q = sqlx::query!("DELETE from delete_users where user_id=$1", user_id)
+        .execute(&app_state.pool)
+        .await;
     if q.is_err() {
         dbg!(&q);
         return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string()
+            message: "Something went wrong, try again later".to_string(),
         });
     }
-    return HttpResponse::Ok().json(Response{
-        message: "Your account has been removed from the delete queue".to_string()
+    return HttpResponse::Ok().json(Response {
+        message: "Your account has been removed from the delete queue".to_string(),
     });
 }

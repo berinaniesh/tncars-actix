@@ -16,10 +16,12 @@ pub async fn email_otp(
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
-        Ok(id) => {user_id = id;},
+        Ok(id) => {
+            user_id = id;
+        }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response{
-                message: e.to_string()
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
             });
         }
     }
