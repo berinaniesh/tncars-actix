@@ -1,3 +1,4 @@
+pub mod comments;
 pub mod hello;
 pub mod posts;
 pub mod users;

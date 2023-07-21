@@ -3,7 +3,7 @@ use crate::misc::jwt::get_id_from_request;
 use crate::models::Response;
 use actix_web::{post, web, HttpRequest, HttpResponse};
 
-#[post("/like/{id}")]
+#[post("/like/{post_id}")]
 pub async fn add_like(
     req: HttpRequest,
     app_state: web::Data<AppState>,
@@ -47,7 +47,7 @@ pub async fn add_like(
             message: "Like removed".to_string(),
         });
     }
-    return HttpResponse::InternalServerError().json(Response {
-        message: "Something went wrong, try again later".to_string(),
+    return HttpResponse::BadRequest().json(Response {
+        message: "The request could not be completed. Maybe you are trying to add a like to a post that does not exist?".to_string(),
     });
 }
