@@ -31,6 +31,8 @@ pub struct UserOut {
     pub email: String,
     pub username: String,
     pub phone: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     pub bio: Option<String>,
     pub address: Option<String>,
     pub profile_pic_url: Option<String>,
@@ -53,6 +55,8 @@ pub struct UpdateUser {
     pub email: Option<String>,
     pub username: Option<String>,
     pub phone: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     pub bio: Option<String>,
     pub address: Option<String>,
 }

@@ -1,7 +1,7 @@
 use crate::misc::appstate::AppState;
 use crate::misc::constants::OTP_EXPIRY;
 use crate::misc::email::send_email;
-use crate::misc::utils::is_available_username;
+use crate::misc::utils::{is_available_username, make_first_letter_capital};
 use crate::misc::utils::{generate_otp, generate_verify_url};
 use crate::misc::validator::get_valid_username;
 use crate::misc::validator::{validate_email, validate_phone};
@@ -57,7 +57,7 @@ pub async fn get_updated_user(
     form: &web::Json<UpdateUser>,
     app_state: &web::Data<AppState>,
 ) -> UserOut {
-    let user_result = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
+    let user_result = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
     let mut user_out = user_result.unwrap();
 
     if form.email.is_some() {
@@ -95,7 +95,12 @@ pub async fn get_updated_user(
             }
         }
     }
-
+    if form.first_name.is_some() {
+        user_out.first_name = Some(make_first_letter_capital(form.first_name.as_ref().unwrap().trim().to_string()));
+    }
+    if form.last_name.is_some() {
+        user_out.last_name = Some(make_first_letter_capital(form.last_name.as_ref().unwrap().trim().to_string()))
+    }
     if form.bio.is_some() {
         user_out.bio = Some(form.bio.as_ref().unwrap().to_string());
     }

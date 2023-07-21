@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS public.users
     username character varying COLLATE pg_catalog."default" NOT NULL,
     password character varying COLLATE pg_catalog."default" NOT NULL,
     phone character varying COLLATE pg_catalog."default",
+    first_name character varying COLLATE pg_catalog."default",
+    last_name character varying COLLATE pg_catalog."default",
     bio character varying COLLATE pg_catalog."default",
     address character varying COLLATE pg_catalog."default",
     profile_pic_url character varying COLLATE pg_catalog."default",
