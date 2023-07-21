@@ -12,15 +12,16 @@ CREATE SEQUENCE follows_id_seq
 CREATE TABLE IF NOT EXISTS public.follows
 (
     id integer NOT NULL DEFAULT nextval('follows_id_seq'::regclass),
-    "from" integer NOT NULL,
-    "to" integer NOT NULL,
+    from_user integer NOT NULL,
+    to_user integer NOT NULL,
+    UNIQUE (from_user, to_user),
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT follows_pkey PRIMARY KEY (id),
-    CONSTRAINT from_user_link FOREIGN KEY ("from")
+    CONSTRAINT from_user_link FOREIGN KEY (from_user)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE,
-    CONSTRAINT to_user_link FOREIGN KEY ("to")
+    CONSTRAINT to_user_link FOREIGN KEY (to_user)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE

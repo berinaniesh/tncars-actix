@@ -2,7 +2,7 @@ use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
 use crate::models::comments::{AddComment, CommentDelete, CommentOut};
 use crate::models::Response;
-use actix_web::{get, delete, post, web, HttpRequest, HttpResponse};
+use actix_web::{delete, get, post, web, HttpRequest, HttpResponse};
 
 #[post("/addcomment/{post_id}")]
 pub async fn add_comment(
@@ -24,7 +24,15 @@ pub async fn add_comment(
             });
         }
     }
-    let q1 = sqlx::query_as!(CommentOut, "INSERT INTO comments (user_id, post_id, comment) VALUES ($1, $2, $3) RETURNING *", user_id, post_id, &form.comment).fetch_one(&app_state.pool).await;
+    let q1 = sqlx::query_as!(
+        CommentOut,
+        "INSERT INTO comments (user_id, post_id, comment) VALUES ($1, $2, $3) RETURNING *",
+        user_id,
+        post_id,
+        &form.comment
+    )
+    .fetch_one(&app_state.pool)
+    .await;
     if q1.is_err() {
         return HttpResponse::InternalServerError().json(Response {
             message: "Something went wrong, try again later".to_string(),
@@ -86,11 +94,17 @@ pub async fn delete_comment(
 #[get("/comments/{post_id}")]
 pub async fn get_comments(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
     let post_id = path.into_inner();
-    let q1 = sqlx::query_as!(CommentOut, "SELECT * FROM comments WHERE post_id=$1", post_id).fetch_all(&app_state.pool).await;
+    let q1 = sqlx::query_as!(
+        CommentOut,
+        "SELECT * FROM comments WHERE post_id=$1",
+        post_id
+    )
+    .fetch_all(&app_state.pool)
+    .await;
     if q1.is_ok() {
         return HttpResponse::Ok().json(q1.unwrap());
     }
-    return HttpResponse::InternalServerError().json(Response{
-        message: "Something went wrong, try again later".to_string()
+    return HttpResponse::InternalServerError().json(Response {
+        message: "Something went wrong, try again later".to_string(),
     });
 }

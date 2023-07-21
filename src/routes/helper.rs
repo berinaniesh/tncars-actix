@@ -1,8 +1,8 @@
 use crate::misc::appstate::AppState;
 use crate::misc::constants::OTP_EXPIRY;
 use crate::misc::email::send_email;
-use crate::misc::utils::{is_available_username, make_first_letter_capital};
 use crate::misc::utils::{generate_otp, generate_verify_url};
+use crate::misc::utils::{is_available_username, make_first_letter_capital};
 use crate::misc::validator::get_valid_username;
 use crate::misc::validator::{validate_email, validate_phone};
 use crate::models::users::{UpdateUser, UserOut};
@@ -96,10 +96,14 @@ pub async fn get_updated_user(
         }
     }
     if form.first_name.is_some() {
-        user_out.first_name = Some(make_first_letter_capital(form.first_name.as_ref().unwrap().trim().to_string()));
+        user_out.first_name = Some(make_first_letter_capital(
+            form.first_name.as_ref().unwrap().trim().to_string(),
+        ));
     }
     if form.last_name.is_some() {
-        user_out.last_name = Some(make_first_letter_capital(form.last_name.as_ref().unwrap().trim().to_string()))
+        user_out.last_name = Some(make_first_letter_capital(
+            form.last_name.as_ref().unwrap().trim().to_string(),
+        ))
     }
     if form.email_public.is_some() {
         user_out.email_public = form.email_public.unwrap();
