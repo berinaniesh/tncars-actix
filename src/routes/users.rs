@@ -34,7 +34,7 @@ pub async fn create_user(
     }
     let hashed_pw = hash(&form.password);
     let created = sqlx::query_as!(UserOut,
-        "INSERT INTO users (email, username, password) values ($1, $2, $3) RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at",
+        "INSERT INTO users (email, username, password) values ($1, $2, $3) RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at",
         &form.email,
         username,
         &hashed_pw
@@ -121,7 +121,7 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
     let user_id_result = get_id_from_request(&req, &app_state);
     match user_id_result.await {
         Ok(val) => {
-            let user_result = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at FROM users WHERE id=$1", val).fetch_one(&app_state.pool).await;
+            let user_result = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at FROM users WHERE id=$1", val).fetch_one(&app_state.pool).await;
             match user_result {
                 Ok(user) => {
                     return HttpResponse::Ok().json(user);
@@ -208,7 +208,13 @@ pub async fn update_user(
         }
     }
     let updated_user = get_updated_user(user_id, &form, &app_state).await;
-    let q = sqlx::query_as!(UserOut, "UPDATE users set email=$1, username=$2, phone=$3, first_name=$4, last_name=$5, bio=$6, address=$7, email_verified=$8, phone_verified=$9 WHERE id=$10 RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at", updated_user.email, updated_user.username, updated_user.phone, updated_user.first_name, updated_user.last_name, updated_user.bio, updated_user.address, updated_user.email_verified, updated_user.phone_verified, user_id).fetch_one(&app_state.pool).await;
+    let q = sqlx::query_as!(UserOut, r#"
+        UPDATE users SET 
+        email=$1, username=$2, phone=$3, first_name=$4, last_name=$5, bio=$6, address=$7, email_verified=$8, phone_verified=$9, email_public=$10, phone_public=$11
+        WHERE id=$12
+        RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at
+        "#, 
+        updated_user.email, updated_user.username, updated_user.phone, updated_user.first_name, updated_user.last_name, updated_user.bio, updated_user.address, updated_user.email_verified, updated_user.phone_verified, updated_user.email_public, updated_user.phone_public, user_id).fetch_one(&app_state.pool).await;
     if q.is_err() {
         HttpResponse::InternalServerError().json(Response {
             message: "Something went wrong, try again later".to_string(),

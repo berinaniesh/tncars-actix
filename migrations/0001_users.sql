@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.users
     credits integer NOT NULL DEFAULT 100,
     email_verified boolean NOT NULL DEFAULT false,
     phone_verified boolean NOT NULL DEFAULT false,
+    email_public boolean NOT NULL DEFAULT false,
+    phone_public boolean NOT NULL DEFAULT false,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_active boolean NOT NULL DEFAULT true,

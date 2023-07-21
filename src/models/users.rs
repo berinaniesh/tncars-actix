@@ -39,6 +39,8 @@ pub struct UserOut {
     pub credits: i32,
     pub email_verified: bool,
     pub phone_verified: bool,
+    pub email_public: bool,
+    pub phone_public: bool,
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -59,4 +61,6 @@ pub struct UpdateUser {
     pub last_name: Option<String>,
     pub bio: Option<String>,
     pub address: Option<String>,
+    pub email_public: Option<bool>,
+    pub phone_public: Option<bool>
 }
