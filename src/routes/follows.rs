@@ -1,8 +1,9 @@
 use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
-use crate::models::Response;
 use crate::misc::utils::get_id;
-use actix_web::{post, web, HttpRequest, HttpResponse};
+use crate::models::follows::UserIds;
+use crate::models::Response;
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
 
 #[post("/follow/user/{id}")]
 pub async fn follow_user(
@@ -68,5 +69,83 @@ pub async fn follow_user(
     }
     return HttpResponse::InternalServerError().json(Response {
         message: "Something went wrong, try again later".to_string(),
+    });
+}
+
+#[get("/following/{id}")]
+pub async fn get_following(
+    path: web::Path<String>,
+    app_state: web::Data<AppState>,
+) -> HttpResponse {
+    let username = path.into_inner();
+    let user_id_opt = get_id(&username);
+    if user_id_opt.is_some() {
+        let user_id = user_id_opt.unwrap();
+        let q1 = sqlx::query_as!(
+            UserIds,
+            "SELECT to_user AS user_id FROM follows WHERE from_user=$1",
+            user_id
+        )
+        .fetch_all(&app_state.pool)
+        .await;
+        if q1.is_ok() {
+            let v = q1.unwrap();
+            let mut ans_vec = Vec::new();
+            for i in v {
+                ans_vec.push(i.user_id)
+            }
+            return HttpResponse::Ok().json(ans_vec);
+        }
+    }
+    let q2 = sqlx::query_as!(UserIds, "SELECT to_user AS user_id from follows WHERE from_user=(SELECT users.id FROM users WHERE username=$1)", username).fetch_all(&app_state.pool).await;
+    if q2.is_ok() {
+        let v = q2.unwrap();
+        let mut ans_vec = Vec::new();
+        for i in v {
+            ans_vec.push(i.user_id);
+        }
+        return HttpResponse::Ok().json(ans_vec);
+    }
+    return HttpResponse::BadRequest().json(Response {
+        message: format!("The requested user: {} cannot be found", username),
+    });
+}
+
+#[get("/followedby/{id}")]
+pub async fn get_followed_by(
+    path: web::Path<String>,
+    app_state: web::Data<AppState>,
+) -> HttpResponse {
+    let username = path.into_inner();
+    let user_id_opt = get_id(&username);
+    if user_id_opt.is_some() {
+        let user_id = user_id_opt.unwrap();
+        let q1 = sqlx::query_as!(
+            UserIds,
+            "SELECT from_user AS user_id FROM follows WHERE to_user=$1",
+            user_id
+        )
+        .fetch_all(&app_state.pool)
+        .await;
+        if q1.is_ok() {
+            let v = q1.unwrap();
+            let mut ans_vec = Vec::new();
+            for i in v {
+                ans_vec.push(i.user_id)
+            }
+            return HttpResponse::Ok().json(ans_vec);
+        }
+    }
+    let q2 = sqlx::query_as!(UserIds, "SELECT from_user AS user_id from follows WHERE to_user=(SELECT users.id FROM users WHERE username=$1)", username).fetch_all(&app_state.pool).await;
+    if q2.is_ok() {
+        let v = q2.unwrap();
+        let mut ans_vec = Vec::new();
+        for i in v {
+            ans_vec.push(i.user_id);
+        }
+        return HttpResponse::Ok().json(ans_vec);
+    }
+    return HttpResponse::BadRequest().json(Response {
+        message: format!("The requested user: {} cannot be found", username),
     });
 }
