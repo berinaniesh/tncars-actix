@@ -13,6 +13,7 @@ pub struct CommentOut {
     pub post_id: i32,
     pub comment: String,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 pub struct CommentDelete {

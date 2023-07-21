@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.comments
     post_id integer NOT NULL,
     comment character varying COLLATE pg_catalog."default" NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT comments_pkey PRIMARY KEY (id),
     CONSTRAINT post_link FOREIGN KEY (post_id)
         REFERENCES public.posts (id) MATCH SIMPLE
