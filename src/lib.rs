@@ -47,6 +47,7 @@ impl TNCarsApp {
                 .service(routes::comments::add_comment)
                 .service(routes::comments::delete_comment)
                 .service(routes::comments::get_comments)
+                .service(routes::utils::is_username_available)
         })
         .bind(("127.0.0.1", port))?
         .run()

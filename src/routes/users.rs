@@ -2,6 +2,7 @@ use crate::misc::appstate::AppState;
 use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
 use crate::misc::validator::{get_valid_username, validate_email};
+use crate::misc::utils::is_available_username;
 use crate::models::users::{
     CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut,
 };
@@ -22,10 +23,15 @@ pub async fn create_user(
     let username_result = get_valid_username(&form.username);
     if username_result.is_none() {
         return HttpResponse::BadRequest().json(Response {
-            message: "Username invalid".to_string(),
+            message: "Username invalid.".to_string(),
         });
     }
     let username = username_result.unwrap();
+    if is_available_username(&username, &app_state).await == false {
+        return HttpResponse::BadRequest().json(Response{
+            message: "Username already taken".to_string()
+        });
+    }
     let hashed_pw = hash(&form.password);
     let created = sqlx::query_as!(UserOut,
         "INSERT INTO users (email, username, password) values ($1, $2, $3) RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, is_active, created_at, updated_at",
