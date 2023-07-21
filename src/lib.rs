@@ -43,6 +43,7 @@ impl TNCarsApp {
                 .service(routes::posts::update_post)
                 .service(routes::posts::delete_post)
                 .service(routes::users::delete_user)
+                .service(routes::likes::add_like)
         })
         .bind(("127.0.0.1", port))?
         .run()
