@@ -292,3 +292,18 @@ pub async fn undelete_user(req: HttpRequest, app_state: web::Data<AppState>) -> 
         message: "Your account has been removed from the delete queue".to_string(),
     });
 }
+
+#[get("/users/{id}")]
+pub async fn get_user(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
+    let user_id = path.into_inner();
+    return HttpResponse::Ok().json(Response{
+        message: "ok".to_string()
+    });
+}
+
+#[get("/users/{id}/posts")]
+pub async fn get_users_posts(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
+    return HttpResponse::Ok().json(Response{
+        message: "ok".to_string()
+    });
+}

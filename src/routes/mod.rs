@@ -6,3 +6,4 @@ pub mod posts;
 pub mod users;
 pub mod verify;
 pub mod utils;
+pub mod follows;
