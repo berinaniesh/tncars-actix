@@ -4,6 +4,7 @@ use crate::misc::jwt::{generate_token, get_id_from_request};
 use crate::misc::utils::is_available_username;
 use crate::misc::validator::{get_valid_username, validate_email};
 use crate::models::posts::PostOut;
+use crate::misc::utils::get_id;
 use crate::models::users::{
     CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut, UserOutPublic,
 };
@@ -301,66 +302,58 @@ pub async fn undelete_user(req: HttpRequest, app_state: web::Data<AppState>) -> 
 }
 
 #[get("/users/{id}")]
-pub async fn get_user_id(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
-    let user_id = path.into_inner();
-    let q1 = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
-    if q1.is_err() {
+pub async fn get_user(path: web::Path<String>, app_state: web::Data<AppState>) -> HttpResponse {
+    let user_string = path.into_inner();
+    let user_id_opt = get_id(&user_string);
+    if user_id_opt.is_some() {
+        let user_id = user_id_opt.unwrap();
+        let q1 = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
+        if q1.is_err() {
+            return HttpResponse::NotFound().json(Response {
+                message: format!("User with id: {} not found in the database", user_id),
+            });
+        }
+        let user_out: UserOutPublic = q1.unwrap().get_public_user();
+        return HttpResponse::Ok().json(user_out);
+    }
+    let q2 = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at FROM users WHERE username=$1", user_string).fetch_one(&app_state.pool).await;
+    if q2.is_err() {
         return HttpResponse::NotFound().json(Response {
-            message: format!("User with id: {} not found in the database", user_id),
+            message: format!("User with username: {} not found in the database", user_string),
         });
     }
-    let user_out: UserOutPublic = q1.unwrap().get_public_user();
-    return HttpResponse::Ok().json(user_out);
-}
-
-#[get("/username/{username}")]
-pub async fn get_user_username(
-    path: web::Path<String>,
-    app_state: web::Data<AppState>,
-) -> HttpResponse {
-    let username = path.into_inner();
-    let q1 = sqlx::query_as!(UserOut, "SELECT id, email, username, phone, first_name, last_name, bio, address, profile_pic_url, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at FROM users WHERE username=$1", username).fetch_one(&app_state.pool).await;
-    if q1.is_err() {
-        return HttpResponse::NotFound().json(Response {
-            message: format!("User with username: {} not found in the database", username),
-        });
-    }
-    let user_out: UserOutPublic = q1.unwrap().get_public_user();
+    let user_out: UserOutPublic = q2.unwrap().get_public_user();
     return HttpResponse::Ok().json(user_out);
 }
 
 #[get("/users/{id}/posts")]
-pub async fn get_users_posts_id(
-    path: web::Path<i32>,
-    app_state: web::Data<AppState>,
-) -> HttpResponse {
-    let user_id = path.into_inner();
-    let q1 = sqlx::query_as!(PostOut, r#"
-        SELECT id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
-        FROM posts WHERE user_id=$1
-        "#, user_id).fetch_all(&app_state.pool).await;
-    if q1.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    return HttpResponse::Ok().json(q1.unwrap());
-}
-
-#[get("/username/{id}/posts")]
-pub async fn get_users_posts_username(
+pub async fn get_users_posts(
     path: web::Path<String>,
     app_state: web::Data<AppState>,
 ) -> HttpResponse {
     let username = path.into_inner();
-    let q1 = sqlx::query_as!(PostOut, r#"
+    let user_id_opt = get_id(&username);
+    if user_id_opt.is_some() {
+        let user_id = user_id_opt.unwrap();
+        let q1 = sqlx::query_as!(PostOut, r#"
+            SELECT id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
+            FROM posts WHERE user_id=$1
+            "#, user_id).fetch_all(&app_state.pool).await;
+        if q1.is_err() {
+            return HttpResponse::InternalServerError().json(Response {
+                message: "Something went wrong, try again later".to_string(),
+            });
+        }
+        return HttpResponse::Ok().json(q1.unwrap());
+    }
+    let q2 = sqlx::query_as!(PostOut, r#"
         SELECT id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
         FROM posts WHERE user_id=(SELECT users.id FROM users WHERE username=$1)
         "#, username).fetch_all(&app_state.pool).await;
-    if q1.is_err() {
+    if q2.is_err() {
         return HttpResponse::InternalServerError().json(Response {
             message: "Something went wrong, try again later".to_string(),
         });
     }
-    return HttpResponse::Ok().json(q1.unwrap());
+    return HttpResponse::Ok().json(q2.unwrap());
 }

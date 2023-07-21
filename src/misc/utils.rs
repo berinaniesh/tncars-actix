@@ -136,6 +136,9 @@ pub fn get_updated_post(form: web::Json<UpdatePost>, db_data: UpdatedPost) -> Up
 }
 
 pub async fn is_available_username(s: &String, app_state: &web::Data<AppState>) -> bool {
+    if s.parse::<i32>().is_ok() {
+        return false;
+    }
     let query = sqlx::query!("SELECT id FROM users WHERE username=$1", s)
         .fetch_one(&app_state.pool)
         .await;
@@ -144,4 +147,12 @@ pub async fn is_available_username(s: &String, app_state: &web::Data<AppState>) 
     } else {
         return false;
     }
+}
+
+pub fn get_id(s: &String) -> Option<i32> {
+    let ans = s.parse::<i32>();
+    if ans.is_ok() {
+        return Some(ans.unwrap());
+    }
+    return None;
 }

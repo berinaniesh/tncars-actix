@@ -67,6 +67,7 @@ pub struct UpdateUser {
 
 #[derive(Serialize)]
 pub struct UserOutPublic {
+    pub id: i32,
     pub username: String,
     pub email: Option<String>,
     pub phone: Option<String>,
@@ -93,6 +94,7 @@ impl UserOut {
             phone = None
         }
         return UserOutPublic {
+            id: self.id,
             username: self.username.clone(),
             email: email,
             phone: phone,
