@@ -11,15 +11,15 @@ use mime::{ Mime, IMAGE_PNG, IMAGE_JPEG, IMAGE_GIF };
 use uuid::Uuid;
 use image::{ DynamicImage, imageops::FilterType };
 
-#[post("/upload")]
-pub async fn upload(mut payload: Multipart, req: HttpRequest) -> HttpResponse {
+#[post("/upload/profilepic")]
+pub async fn upload(mut payload: Multipart, req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
     let content_length: usize = match req.headers().get(CONTENT_LENGTH) {
         Some(header_value) => header_value.to_str().unwrap_or("0").parse().unwrap(),
         None => "0".parse().unwrap(),
     };
 
-    let max_file_count: usize = 3;
-    let max_file_size: usize = 10_000_000;
+    let max_file_count: usize = 1;
+    let max_file_size: usize = 10_000_000; // bytes
     let legal_filetypes: [Mime; 3] = [IMAGE_PNG, IMAGE_JPEG, IMAGE_GIF];
     let mut current_count: usize = 0;
     let dir: &str = "./upload/";
