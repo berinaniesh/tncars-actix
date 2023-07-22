@@ -339,7 +339,7 @@ pub async fn get_users_posts(
     if user_id_opt.is_some() {
         let user_id = user_id_opt.unwrap();
         let q1 = sqlx::query_as!(PostOut, r#"
-            SELECT id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
+            SELECT id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
             FROM posts WHERE user_id=$1
             "#, user_id).fetch_all(&app_state.pool).await;
         if q1.is_err() {
@@ -350,7 +350,7 @@ pub async fn get_users_posts(
         return HttpResponse::Ok().json(q1.unwrap());
     }
     let q2 = sqlx::query_as!(PostOut, r#"
-        SELECT id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
+        SELECT id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
         FROM posts WHERE user_id=(SELECT users.id FROM users WHERE username=$1)
         "#, username).fetch_all(&app_state.pool).await;
     if q2.is_err() {

@@ -73,6 +73,7 @@ pub struct PostOut {
     pub title: String,
     pub user_id: i32,
     pub brand: String,
+    pub post_pic: Option<String>,
     pub price: i32,
     pub model_year: i32,
     pub km_driven: i32,

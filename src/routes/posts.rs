@@ -33,7 +33,7 @@ pub async fn create_post(
         values 
         ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING
-        id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
+        id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
         "#,
         &form.title,
         user_id,
@@ -61,7 +61,7 @@ pub async fn get_post(app_state: web::Data<AppState>, path: web::Path<i32>) -> H
     let post_id = path.into_inner();
     let query = sqlx::query_as!(PostOut,
         r#"
-        SELECT id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at FROM posts where id=$1
+        SELECT id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at FROM posts where id=$1
         "#, post_id) 
         .fetch_one(&app_state.pool)
         .await;
@@ -121,7 +121,7 @@ pub async fn update_post(
         UPDATE posts set 
         title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9, is_sold=$10
         where id=$11 
-        RETURNING id, title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
+        RETURNING id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
         "#,
         &updated_post.title,
         &updated_post.brand,
