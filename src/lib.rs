@@ -55,6 +55,7 @@ impl TNCarsApp {
                 .service(routes::follows::follow_user)
                 .service(routes::follows::get_following)
                 .service(routes::follows::get_followed_by)
+                .service(routes::upload::upload)
         })
         .bind(("127.0.0.1", port))?
         .run()

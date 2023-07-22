@@ -14,20 +14,26 @@ path = "src/main.rs"
 name = "tncars-actix"
 
 [dependencies]
+actix-multipart = "0.6.0"
 actix-web = "4"
 anyhow = "1.0.72"
 argon2 = "0.5.1"
 chrono = { version = "0.4.26", features = ["serde"] }
 dotenvy = "0.15.7"
 env_logger = "0.10.0"
+futures-util = "0.3.28"
 heck = { version = "0.4.1", features = ["unicode"] }
+image = "0.24.6"
 jsonwebtoken = "8.3.0"
 lettre = "0.10.4"
+mime = "0.3.17"
 rand = "0.8.5"
 regex = "1.9.1"
 serde = "1.0.163"
 sqlx = { version = "0.7.1", features = ["postgres", "macros", "runtime-tokio", "chrono"] }
 thiserror = "1.0.43"
+tokio = { version = "1.29.1", features = ["fs"] }
+uuid = { version = "1.4.1", features = ["v4"] }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
