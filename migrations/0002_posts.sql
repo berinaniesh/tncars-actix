@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.posts
     title character varying COLLATE pg_catalog."default" NOT NULL,
     user_id integer NOT NULL,
     brand character varying COLLATE pg_catalog."default" NOT NULL,
+    post_pic character varying COLLATE pg_catalog."default",
     price integer NOT NULL,
     model_year integer NOT NULL,
     km_driven integer NOT NULL,

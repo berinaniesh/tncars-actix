@@ -35,7 +35,7 @@ pub struct UserOut {
     pub last_name: Option<String>,
     pub bio: Option<String>,
     pub address: Option<String>,
-    pub profile_pic_url: Option<String>,
+    pub profile_pic: Option<String>,
     pub credits: i32,
     pub email_verified: bool,
     pub phone_verified: bool,
@@ -75,7 +75,7 @@ pub struct UserOutPublic {
     pub last_name: Option<String>,
     pub bio: Option<String>,
     pub address: Option<String>,
-    pub profile_pic_url: Option<String>,
+    pub profile_pic: Option<String>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -102,7 +102,7 @@ impl UserOut {
             last_name: self.last_name.clone(),
             bio: self.bio.clone(),
             address: self.address.clone(),
-            profile_pic_url: self.profile_pic_url.clone(),
+            profile_pic: self.profile_pic.clone(),
             created_at: self.created_at.clone(),
         };
     }

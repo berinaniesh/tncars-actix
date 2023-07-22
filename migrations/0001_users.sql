@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.users
     last_name character varying COLLATE pg_catalog."default",
     bio character varying COLLATE pg_catalog."default",
     address character varying COLLATE pg_catalog."default",
-    profile_pic_url character varying COLLATE pg_catalog."default",
+    profile_pic character varying COLLATE pg_catalog."default",
     credits integer NOT NULL DEFAULT 100,
     email_verified boolean NOT NULL DEFAULT false,
     phone_verified boolean NOT NULL DEFAULT false,
