@@ -4,6 +4,7 @@ mod routes;
 
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
+use actix_files as fs;
 
 use misc::appstate::get_appstate;
 
@@ -29,6 +30,7 @@ impl TNCarsApp {
             App::new()
                 .wrap(Logger::default())
                 .app_data(web::Data::new(app_state.clone()))
+                .service(fs::Files::new("/static", "./upload").show_files_listing())
                 .service(routes::hello::hello)
                 .service(routes::users::create_user)
                 .service(routes::users::login_user)
@@ -55,7 +57,7 @@ impl TNCarsApp {
                 .service(routes::follows::follow_user)
                 .service(routes::follows::get_following)
                 .service(routes::follows::get_followed_by)
-                .service(routes::upload::upload)
+                .service(routes::upload::upload_profilepic)
         })
         .bind(("127.0.0.1", port))?
         .run()
