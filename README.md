@@ -1,6 +1,6 @@
 # TNCars Actix
 
-REST backend for TNCars, written using Actix-Web.
+REST backend for TNCars, written using Actix-Web, rewritten from scratch.
 
 
 ## Todo
