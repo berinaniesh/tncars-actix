@@ -1,31 +1,32 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CreateUser {
     pub email: String,
     pub username: String,
     pub password: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct LoginUser {
     pub credential: String,
     pub password: String,
 }
 
+#[derive(Serialize, Debug)]
 pub struct IdPassword {
     // struct to query as when checking for password and returning jwt.
     pub id: i32,
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct JWTResponse {
     pub jwt: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct UserOut {
     pub id: i32,
     pub email: String,
@@ -52,7 +53,7 @@ pub struct EmailOTP {
     pub email_verified: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct UpdateUser {
     pub email: Option<String>,
     pub username: Option<String>,
@@ -65,7 +66,7 @@ pub struct UpdateUser {
     pub phone_public: Option<bool>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct UserOutPublic {
     pub id: i32,
     pub username: String,

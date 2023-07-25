@@ -2,9 +2,9 @@ mod misc;
 mod models;
 mod routes;
 
+use actix_files as fs;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
-use actix_files as fs;
 
 use misc::appstate::get_appstate;
 

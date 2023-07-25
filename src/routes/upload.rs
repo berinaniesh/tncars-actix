@@ -1,21 +1,21 @@
-use tokio::fs;
-use tokio::io::AsyncWriteExt as _;
-use actix_web::{ HttpResponse,
-                 HttpRequest,
-                 web,
-                 post,
-                 http::header::CONTENT_LENGTH };
-use actix_multipart::{ Multipart };
-use futures_util::{ TryStreamExt as _ };
-use mime::{ Mime, IMAGE_PNG, IMAGE_JPEG };
-use uuid::Uuid;
+use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
 use crate::models::Response;
-use crate::misc::appstate::AppState;
-use image::{ DynamicImage, imageops::FilterType };
+use actix_multipart::Multipart;
+use actix_web::{http::header::CONTENT_LENGTH, post, web, HttpRequest, HttpResponse};
+use futures_util::TryStreamExt as _;
+use image::{imageops::FilterType, DynamicImage};
+use mime::{Mime, IMAGE_JPEG, IMAGE_PNG};
+use tokio::fs;
+use tokio::io::AsyncWriteExt as _;
+use uuid::Uuid;
 
 #[post("/upload/profilepic")]
-pub async fn upload_profilepic(mut payload: Multipart, req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn upload_profilepic(
+    mut payload: Multipart,
+    req: HttpRequest,
+    app_state: web::Data<AppState>,
+) -> HttpResponse {
     let content_length: usize = match req.headers().get(CONTENT_LENGTH) {
         Some(header_value) => header_value.to_str().unwrap_or("0").parse().unwrap_or(0),
         None => 0,
@@ -38,16 +38,18 @@ pub async fn upload_profilepic(mut payload: Multipart, req: HttpRequest, app_sta
     let legal_filetypes: [Mime; 2] = [IMAGE_PNG, IMAGE_JPEG];
     let dir: &str = "./upload/";
 
-    if content_length > max_file_size { 
-        return HttpResponse::BadRequest().json( Response {
-            message: "File too big, max allowed size is 1 MB".to_string()
+    if content_length > max_file_size {
+        return HttpResponse::BadRequest().json(Response {
+            message: "File too big, max allowed size is 1 MB".to_string(),
         });
     }
 
     if let Ok(Some(mut field)) = payload.try_next().await {
         let filetype: Option<&Mime> = field.content_type();
-        if filetype.is_none() || !legal_filetypes.contains(&filetype.unwrap()) { 
-            return HttpResponse::BadRequest().json(Response{message: "Only jpeg/png files allowed".to_string()}) 
+        if filetype.is_none() || !legal_filetypes.contains(&filetype.unwrap()) {
+            return HttpResponse::BadRequest().json(Response {
+                message: "Only jpeg/png files allowed".to_string(),
+            });
         }
         let destination: String = format!(
             "{}{}-{}",
@@ -67,12 +69,23 @@ pub async fn upload_profilepic(mut payload: Multipart, req: HttpRequest, app_sta
             let _ = fs::remove_file(&destination).await.unwrap();
             uploaded_img
                 .resize(640, 480, FilterType::Lanczos3)
-                .save(format!("{}{}", dir, new_fname2)).unwrap();
-        }).await.unwrap().await;
-        let _ = sqlx::query!("UPDATE users SET profile_pic=$1 WHERE id=$2", &new_fname, user_id).execute(&app_state.pool).await.unwrap();
+                .save(format!("{}{}", dir, new_fname2))
+                .unwrap();
+        })
+        .await
+        .unwrap()
+        .await;
+        let _ = sqlx::query!(
+            "UPDATE users SET profile_pic=$1 WHERE id=$2",
+            &new_fname,
+            user_id
+        )
+        .execute(&app_state.pool)
+        .await
+        .unwrap();
     }
 
-    return HttpResponse::Ok().json(Response{
-        message: "Profile Pic updated successfully".to_string()
+    return HttpResponse::Ok().json(Response {
+        message: "Profile Pic updated successfully".to_string(),
     });
 }
