@@ -10,7 +10,7 @@ use crate::models::Response;
 use actix_web::{web, HttpResponse};
 use chrono::{Duration, Utc};
 
-pub async fn create_otp_and_and_send_email(
+pub async fn create_otp_and_send_email(
     user_id: i32,
     email: String,
     app_state: &web::Data<AppState>,

@@ -9,7 +9,7 @@ use crate::models::users::{
     CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut, UserOutPublic,
 };
 use crate::models::Response;
-use crate::routes::helper::{create_otp_and_and_send_email, get_updated_user};
+use crate::routes::helper::{create_otp_and_send_email, get_updated_user};
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 
 #[post("/users")]
@@ -178,7 +178,7 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
         });
     }
 
-    let res = create_otp_and_and_send_email(user.id, user.email, &app_state).await; // Handle errors properly
+    let res = create_otp_and_send_email(user.id, user.email, &app_state).await;
     if res {
         return HttpResponse::Ok().json(Response {
             message: "Email sent successfully".to_string(),
@@ -364,14 +364,62 @@ pub async fn get_users_posts(
 #[get("/users/forgotpassword/{id}")]
 pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppState>) -> HttpResponse {
     let id = path.into_inner();
-    let id_int = get_id(id);
+    let id_int = get_id(&id);
     if id_int.is_some() {
         let user_id = id_int.unwrap();
         let user_email_result = sqlx::query!("SELECT email FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
         if user_email_result.is_err() {
             return HttpResponse::BadRequest().json(Response{
-                message: "User {} is not found in the database".to_string()
+                message: format!("User with id {} is not found in the database", user_id)
+            });
+        }
+        let user_email = user_email_result.unwrap();
+        let u_email = user_email.email;
+        let ans = create_otp_and_send_email(user_id, u_email, &app_state).await;
+        if ans {
+            return HttpResponse::Ok().json(Response {
+                message: "Email sent successfully".to_string()
+            });
+        } else {
+            return HttpResponse::InternalServerError().json(Response {
+                message: "Something wrong with the email server".to_string()
             });
         }
     }
+    if validate_email(&id) {
+        let user_id_result = sqlx::query!("SELECT id FROM users WHERE email=$1", &id).fetch_one(&app_state.pool).await;
+        if user_id_result.is_err() {
+            return HttpResponse::BadRequest().json(Response{
+                message: format!("User with email {} not found in the database", id)
+            });
+        }
+        let user_id = user_id_result.unwrap().id;
+        let ans = create_otp_and_send_email(user_id, id, &app_state).await;
+        if ans {
+            return HttpResponse::Ok().json(Response {
+                message: "Email sent successfully".to_string()
+            });
+        } else {
+            return HttpResponse::InternalServerError().json(Response {
+                message: "Something wrong with the email server".to_string()
+            });
+        }
+    }
+    let username_result = sqlx::query!("SELECT id, email FROM users WHERE username=$1", &id).fetch_one(&app_state.pool).await;
+    if username_result.is_err() {
+        return HttpResponse::BadRequest().json(Response{
+            message: format!("User with username {} not found in database", &id)
+        });
+    }
+    let user_res = username_result.unwrap();
+    let ans = create_otp_and_send_email(user_res.id, user_res.email, &app_state).await;
+        if ans {
+            return HttpResponse::Ok().json(Response {
+                message: "Email sent successfully".to_string()
+            });
+        } else {
+            return HttpResponse::InternalServerError().json(Response {
+                message: "Something wrong with the email server".to_string()
+            });
+        }
 }
