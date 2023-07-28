@@ -253,7 +253,7 @@ pub async fn delete_user(req: HttpRequest, app_state: web::Data<AppState>) -> Ht
     let q3 = sqlx::query!("UPDATE users SET is_active='f' WHERE id=$1", user_id)
         .execute(&app_state.pool)
         .await;
-    if q.is_err() || q3.is_err() {
+    if q.is_err() || q3.is_err() { // Ideally, the above two queries should be within a single transaction so as to roll back (ACID compliance)
         return HttpResponse::InternalServerError().json(Response {
             message: "Something went wrong, try again later".to_string(),
         });

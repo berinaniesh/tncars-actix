@@ -1,6 +1,6 @@
 # To Do
 
-- [ ] Delete the old pic when profile pics are updated
+- [x] Delete the old pic when profile pics are updated
 - [ ] Add endpoints for password reset
 - [ ] Add endpoints for uploading post pics
 - [ ] Add endpoints for direct messages (Preferably websockets)
