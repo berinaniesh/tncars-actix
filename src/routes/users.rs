@@ -360,3 +360,18 @@ pub async fn get_users_posts(
     }
     return HttpResponse::Ok().json(q2.unwrap());
 }
+
+#[get("/users/forgotpassword/{id}")]
+pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppState>) -> HttpResponse {
+    let id = path.into_inner();
+    let id_int = get_id(id);
+    if id_int.is_some() {
+        let user_id = id_int.unwrap();
+        let user_email_result = sqlx::query!("SELECT email FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
+        if user_email_result.is_err() {
+            return HttpResponse::BadRequest().json(Response{
+                message: "User {} is not found in the database".to_string()
+            });
+        }
+    }
+}

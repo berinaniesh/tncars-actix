@@ -7,3 +7,4 @@
 - [ ] Add endpoints for uploading images / files in direct messages
 - [ ] Increase the resize size
 - [ ] Move the image resize function to the utils module
+- [ ] Improve the id/username/email function
