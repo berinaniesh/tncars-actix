@@ -3,7 +3,7 @@ use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 
-pub fn send_email(to: String, otp: String, verify_url: String, email_subject: String, email_body: String) -> bool {
+pub fn send_email(to: String, email_subject: String, email_body: String) -> bool {
     let email = Message::builder()
     .from(format!("Admin (tncars.pp.ua) <{}>", var("EMAIL").expect("Email addresss must be specified in env file")).parse().unwrap())
     .reply_to(format!("Admin <{}>", var("EMAIL").expect("Email addresss must be specified in env file")).parse().unwrap())

@@ -178,16 +178,7 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
         });
     }
 
-    let res = create_otp_and_send_email(user.id, user.email, &app_state).await;
-    if res {
-        return HttpResponse::Ok().json(Response {
-            message: "Email sent successfully".to_string(),
-        });
-    } else {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
+    return create_otp_and_send_email(user.id, user.email, &app_state).await;
 }
 
 // If a wrong username is given by the user, this endpoint just ignores that specific input
@@ -384,7 +375,6 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
                 message: format!("User with email {} not found in the database", id)
             });
         }
-        let user_id = user_id_result.unwrap().id;
         return forgot_password_email(&id, &app_state).await;
     }
     let username_result = sqlx::query!("SELECT id, email FROM users WHERE username=$1", &id).fetch_one(&app_state.pool).await;
