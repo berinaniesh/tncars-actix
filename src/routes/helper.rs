@@ -17,6 +17,8 @@ pub async fn create_otp_and_send_email(
 ) -> bool {
     let otp = generate_otp();
     let verify_url = generate_verify_url();
+    let email_subject = String::from("Verify your account");
+    let email_body = format!("The OTP to verify your account is {}.\nYou can also verify your account by clicking the link below.\nhttps://tncars.pp.ua/verify/url/{}.\nThe OTP and the link are valid for the next 15 minutes\nRegards,\ntncars.pp.ua", otp, verify_url);
     let expiry = Utc::now() + Duration::seconds(OTP_EXPIRY);
     let _delete_query = sqlx::query!("DELETE FROM email_otp where id=$1", user_id)
         .execute(&app_state.pool)
@@ -32,7 +34,7 @@ pub async fn create_otp_and_send_email(
     .execute(&app_state.pool)
     .await
     .unwrap();
-    return send_email(email, otp, verify_url);
+    return send_email(email, otp, verify_url, email_subject, email_body);
 }
 
 pub async fn make_email_verified(user_id: i32, app_state: &web::Data<AppState>) -> HttpResponse {
@@ -120,4 +122,28 @@ pub async fn get_updated_user(
     }
 
     return user_out;
+}
+
+pub async fn forgot_password_email(email: &String, app_state: &web::Data<AppState>) -> HttpResponse {
+    let otp = generate_otp();
+    let verify_url = generate_verify_url();
+    let email_subject = String::from("Reset your password");
+    let email_body = format!("Someone requested a password reset for your account. If that was not you, you can safely ignore this email.\nThe OTP to validate your identity is {}.\nYou can also reset your password following the link below.\nhttps://tncars.pp.ua/changepassword/url/{}.\nThe OTP and the link are valid for the next 15 minutes\nRegards,\ntncars.pp.ua", otp, verify_url);
+    let expiry = Utc::now() + Duration::seconds(OTP_EXPIRY);
+    let _delete_query = sqlx::query!("DELETE FROM forgot_password_email WHERE user_id=(SELECT id FROM users WHERE email=$1)", email)
+        .execute(&app_state.pool)
+        .await
+        .unwrap();
+    let _insert_query = sqlx::query!(
+        "INSERT INTO forgot_password_email (user_id, otp, verify_url, expires_at) values ((SELECT id FROM users WHERE email=$1), $2, $3, $4)",
+        email,
+        otp,
+        verify_url,
+        expiry
+    )
+    .execute(&app_state.pool)
+    .await
+    .unwrap();
+    let ans = send_email(email.to_string(), otp, verify_url, email_subject, email_body);
+    return HttpResponse::Ok().json("Ok!");
 }

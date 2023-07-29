@@ -9,7 +9,7 @@ use crate::models::users::{
     CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut, UserOutPublic,
 };
 use crate::models::Response;
-use crate::routes::helper::{create_otp_and_send_email, get_updated_user};
+use crate::routes::helper::{create_otp_and_send_email, forgot_password_email, get_updated_user};
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 
 #[post("/users")]
@@ -375,16 +375,7 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
         }
         let user_email = user_email_result.unwrap();
         let u_email = user_email.email;
-        let ans = create_otp_and_send_email(user_id, u_email, &app_state).await;
-        if ans {
-            return HttpResponse::Ok().json(Response {
-                message: "Email sent successfully".to_string()
-            });
-        } else {
-            return HttpResponse::InternalServerError().json(Response {
-                message: "Something wrong with the email server".to_string()
-            });
-        }
+        return forgot_password_email(&u_email, &app_state).await;
     }
     if validate_email(&id) {
         let user_id_result = sqlx::query!("SELECT id FROM users WHERE email=$1", &id).fetch_one(&app_state.pool).await;
@@ -394,16 +385,7 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
             });
         }
         let user_id = user_id_result.unwrap().id;
-        let ans = create_otp_and_send_email(user_id, id, &app_state).await;
-        if ans {
-            return HttpResponse::Ok().json(Response {
-                message: "Email sent successfully".to_string()
-            });
-        } else {
-            return HttpResponse::InternalServerError().json(Response {
-                message: "Something wrong with the email server".to_string()
-            });
-        }
+        return forgot_password_email(&id, &app_state).await;
     }
     let username_result = sqlx::query!("SELECT id, email FROM users WHERE username=$1", &id).fetch_one(&app_state.pool).await;
     if username_result.is_err() {
@@ -412,16 +394,7 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
         });
     }
     let user_res = username_result.unwrap();
-    let ans = create_otp_and_send_email(user_res.id, user_res.email, &app_state).await;
-        if ans {
-            return HttpResponse::Ok().json(Response {
-                message: "Email sent successfully".to_string()
-            });
-        } else {
-            return HttpResponse::InternalServerError().json(Response {
-                message: "Something wrong with the email server".to_string()
-            });
-        }
+    return forgot_password_email(&user_res.email, &app_state).await;
 }
 
 #[post("/users/changepassword/{id}")]

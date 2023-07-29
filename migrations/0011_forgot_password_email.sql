@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS public.forgot_password_email
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
-        NOT VALID
 )
 
 TABLESPACE pg_default;
