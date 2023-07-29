@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS public.email_otp
     user_id integer NOT NULL,
     otp character varying COLLATE pg_catalog."default" NOT NULL,
     verify_url character varying COLLATE pg_catalog."default" NOT NULL,
-    expires_at timestamp with time zone NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at timestamp with time zone NOT NULL,
     CONSTRAINT email_otp_pkey PRIMARY KEY (id),
     CONSTRAINT email_otp_verify_url_verify_url1_key UNIQUE (verify_url),
     CONSTRAINT user_link FOREIGN KEY (user_id)

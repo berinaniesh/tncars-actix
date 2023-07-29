@@ -34,7 +34,7 @@ pub async fn upload_profilepic(
         }
     }
 
-    let max_file_size: usize = 1_048_576; // 1 MB (in bytes)
+    let max_file_size: usize = 1_048_576; // 1 MB (in bytes) // should increase?
     let legal_filetypes: [Mime; 2] = [IMAGE_PNG, IMAGE_JPEG];
     let dir: &str = "./upload/";
 

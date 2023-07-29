@@ -423,3 +423,8 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
             });
         }
 }
+
+#[post("/users/changepassword/{id}")]
+pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppState>) -> HttpResponse {
+    return HttpResponse::Ok().json("Hi");
+}
