@@ -60,6 +60,7 @@ impl TNCarsApp {
                 .service(routes::upload::upload_profilepic)
                 .service(routes::users::forgot_password)
                 .service(routes::users::change_password)
+                .service(routes::utils::get_id_username_email)
         })
         .bind(("127.0.0.1", port))?
         .run()
