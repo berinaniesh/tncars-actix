@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[derive(Deserialize, Debug)]
 pub struct CreateUser {
@@ -107,4 +108,17 @@ impl UserOut {
             created_at: self.created_at.clone(),
         };
     }
+}
+
+
+#[derive(Deserialize, Debug)]
+pub struct OtpPassword {
+    pub otp: String,
+    pub password: String,
+}
+
+#[derive(Debug, FromRow)]
+pub struct ResetPassword {
+    pub otp: String,
+    pub expires_at: DateTime<Utc>,
 }

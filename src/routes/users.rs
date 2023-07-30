@@ -6,11 +6,12 @@ use crate::misc::utils::is_available_username;
 use crate::misc::validator::{get_valid_username, validate_email};
 use crate::models::posts::PostOut;
 use crate::models::users::{
-    CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut, UserOutPublic,
+    CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut, UserOutPublic, OtpPassword, ResetPassword,
 };
 use crate::models::Response;
 use crate::routes::helper::{create_otp_and_send_email, forgot_password_email, get_updated_user};
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
+use chrono::Utc;
 
 #[post("/users")]
 pub async fn create_user(
@@ -129,8 +130,8 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
                     return HttpResponse::Ok().json(user);
                 }
                 Err(_) => {
-                    return HttpResponse::InternalServerError().json(Response {
-                        message: "Something went wrong, try again later".to_string(),
+                    return HttpResponse::InternalServerError().json(Response{
+                        message: "Something went wrong, try again later".to_string()
                     });
                 }
             }
@@ -166,8 +167,8 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
     .fetch_one(&app_state.pool)
     .await;
     if query_result.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
+        return HttpResponse::InternalServerError().json(Response{
+            message: "Something went wrong, try again later".to_string()
         });
     }
     let user = query_result.unwrap();
@@ -387,7 +388,93 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
     return forgot_password_email(&user_res.email, &app_state).await;
 }
 
+// The implementation is clunky because, the id parameter can accept id (i32) or an email or a username
 #[post("/users/changepassword/{id}")]
-pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppState>) -> HttpResponse {
-    return HttpResponse::Ok().json("Hi");
+pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppState>, form: web::Json<OtpPassword>) -> HttpResponse {
+    let url_parameter: String = path.into_inner();
+    let hashed_pw = hash(&form.password);
+    let expired_response = HttpResponse::BadRequest().json(Response{
+        message: "OTP expired, please request a new one".to_string()
+    });
+    let wrong_otp_response = HttpResponse::BadRequest().json(Response {
+        message: "Wrong OTP".to_string()
+    });
+    let successful_response = HttpResponse::Accepted().json(Response{
+        message: "Password changed successfully".to_string()
+    });
+    let id_int_result = get_id(&url_parameter);
+    if id_int_result.is_some() {
+        let id_int = id_int_result.unwrap();
+        let q1 = sqlx::query_as!(ResetPassword, "SELECT otp, expires_at FROM forgot_password_email WHERE user_id=$1", id_int).fetch_one(&app_state.pool).await;
+        if q1.is_err() {
+            return HttpResponse::NotFound().json(Response{
+                message: format!("User with id: {} not found", id_int)
+            });
+        }
+        let q1_ans = q1.unwrap();
+        if q1_ans.expires_at < Utc::now() {
+            return expired_response;
+        }
+        if q1_ans.otp != form.otp {
+            return wrong_otp_response;
+        }
+        let q2 = sqlx::query!("UPDATE users SET password=$1 WHERE id=$2", hashed_pw, id_int).execute(&app_state.pool).await;
+        if q2.is_err() {
+            return HttpResponse::InternalServerError().json(Response{
+                message: "Something went wrong, try again later".to_string()
+            });
+        }
+        return successful_response;
+    }
+    let is_parameter_email = validate_email(&url_parameter);
+    if is_parameter_email {
+        let email = url_parameter.clone();
+        let q3 = sqlx::query_as!(ResetPassword, "SELECT otp, expires_at FROM forgot_password_email WHERE user_id=(SELECT id FROM users WHERE email=$1)", email).fetch_one(&app_state.pool).await;
+        if q3.is_err() {
+            return HttpResponse::NotFound().json(Response{
+                message: format!("User with email: {} not found", email)
+            });
+        }
+        let q3_ans = q3.unwrap();
+        if q3_ans.expires_at < Utc::now() {
+            return expired_response;
+        }
+        if q3_ans.otp != form.otp {
+            return wrong_otp_response;
+        }
+        let q4 = sqlx::query!("UPDATE users SET password=$1 WHERE id=(SELECT id FROM users WHERE email=$2)", hashed_pw, email).execute(&app_state.pool).await;
+        if q4.is_err() {
+            return HttpResponse::InternalServerError().json(Response{
+                message: "Something went wrong, try again later".to_string()
+            });
+        }
+        return successful_response;
+    }
+    let username_opt = get_valid_username(&url_parameter);
+    if username_opt.is_none() {
+        return HttpResponse::BadRequest().json(Response{
+            message: "Bad URL parameter".to_string()
+        });
+    }
+    let username = username_opt.unwrap();
+    let q5 = sqlx::query_as!(ResetPassword, "SELECT otp, expires_at FROM forgot_password_email WHERE user_id=(SELECT id FROM users WHERE username=$1)", username).fetch_one(&app_state.pool).await;
+    if q5.is_err() {
+        return HttpResponse::NotFound().json(Response{
+            message: format!("User with username: {} not found", username)
+        });
+    }
+    let q5_ans = q5.unwrap();
+    if q5_ans.expires_at < Utc::now() {
+        return expired_response;
+    }
+    if q5_ans.otp != form.otp {
+        return wrong_otp_response;
+    }
+    let q6 = sqlx::query!("UPDATE users SET password=$1 WHERE id=(SELECT id FROM users WHERE username=$2)", hashed_pw, username).execute(&app_state.pool).await;
+    if q6.is_err() {
+        return HttpResponse::InternalServerError().json(Response{
+            message: "Something went wrong, try again later".to_string()
+        });
+    }
+    return successful_response;
 }
