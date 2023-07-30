@@ -31,7 +31,7 @@ pub fn validate_year(year: i32) -> i32 {
 
 pub fn get_valid_username(st: &String) -> Option<String> {
     let s = String::from(st.trim());
-    if s.is_empty() {
+    if s.is_empty() || validate_email(&s) {
         return None;
     }
     if s.is_ascii() {

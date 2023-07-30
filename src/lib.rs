@@ -50,7 +50,7 @@ impl TNCarsApp {
                 .service(routes::comments::get_specific_comment)
                 .service(routes::comments::delete_comment)
                 .service(routes::comments::change_comment)
-                .service(routes::comments::get_comments)
+                .service(routes::posts::get_comments)
                 .service(routes::utils::is_username_available)
                 .service(routes::users::get_user)
                 .service(routes::users::get_users_posts)

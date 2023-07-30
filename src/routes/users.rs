@@ -6,7 +6,8 @@ use crate::misc::utils::is_available_username;
 use crate::misc::validator::{get_valid_username, validate_email};
 use crate::models::posts::PostOut;
 use crate::models::users::{
-    CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, UpdateUser, UserOut, UserOutPublic, OtpPassword, ResetPassword,
+    CreateUser, EmailOTP, IdPassword, JWTResponse, LoginUser, OtpPassword, ResetPassword,
+    UpdateUser, UserOut, UserOutPublic,
 };
 use crate::models::Response;
 use crate::routes::helper::{create_otp_and_send_email, forgot_password_email, get_updated_user};
@@ -130,8 +131,8 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
                     return HttpResponse::Ok().json(user);
                 }
                 Err(_) => {
-                    return HttpResponse::InternalServerError().json(Response{
-                        message: "Something went wrong, try again later".to_string()
+                    return HttpResponse::InternalServerError().json(Response {
+                        message: "Something went wrong, try again later".to_string(),
                     });
                 }
             }
@@ -167,8 +168,8 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
     .fetch_one(&app_state.pool)
     .await;
     if query_result.is_err() {
-        return HttpResponse::InternalServerError().json(Response{
-            message: "Something went wrong, try again later".to_string()
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
         });
     }
     let user = query_result.unwrap();
@@ -245,7 +246,8 @@ pub async fn delete_user(req: HttpRequest, app_state: web::Data<AppState>) -> Ht
     let q3 = sqlx::query!("UPDATE users SET is_active='f' WHERE id=$1", user_id)
         .execute(&app_state.pool)
         .await;
-    if q.is_err() || q3.is_err() { // Ideally, the above two queries should be within a single transaction so as to roll back (ACID compliance)
+    if q.is_err() || q3.is_err() {
+        // Ideally, the above two queries should be within a single transaction so as to roll back (ACID compliance)
         return HttpResponse::InternalServerError().json(Response {
             message: "Something went wrong, try again later".to_string(),
         });
@@ -354,15 +356,20 @@ pub async fn get_users_posts(
 }
 
 #[get("/users/forgotpassword/{id}")]
-pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn forgot_password(
+    path: web::Path<String>,
+    app_state: web::Data<AppState>,
+) -> HttpResponse {
     let id = path.into_inner();
     let id_int = get_id(&id);
     if id_int.is_some() {
         let user_id = id_int.unwrap();
-        let user_email_result = sqlx::query!("SELECT email FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
+        let user_email_result = sqlx::query!("SELECT email FROM users WHERE id=$1", user_id)
+            .fetch_one(&app_state.pool)
+            .await;
         if user_email_result.is_err() {
-            return HttpResponse::BadRequest().json(Response{
-                message: format!("User with id {} is not found in the database", user_id)
+            return HttpResponse::BadRequest().json(Response {
+                message: format!("User with id {} is not found in the database", user_id),
             });
         }
         let user_email = user_email_result.unwrap();
@@ -370,18 +377,22 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
         return forgot_password_email(&u_email, &app_state).await;
     }
     if validate_email(&id) {
-        let user_id_result = sqlx::query!("SELECT id FROM users WHERE email=$1", &id).fetch_one(&app_state.pool).await;
+        let user_id_result = sqlx::query!("SELECT id FROM users WHERE email=$1", &id)
+            .fetch_one(&app_state.pool)
+            .await;
         if user_id_result.is_err() {
-            return HttpResponse::BadRequest().json(Response{
-                message: format!("User with email {} not found in the database", id)
+            return HttpResponse::BadRequest().json(Response {
+                message: format!("User with email {} not found in the database", id),
             });
         }
         return forgot_password_email(&id, &app_state).await;
     }
-    let username_result = sqlx::query!("SELECT id, email FROM users WHERE username=$1", &id).fetch_one(&app_state.pool).await;
+    let username_result = sqlx::query!("SELECT id, email FROM users WHERE username=$1", &id)
+        .fetch_one(&app_state.pool)
+        .await;
     if username_result.is_err() {
-        return HttpResponse::BadRequest().json(Response{
-            message: format!("User with username {} not found in database", &id)
+        return HttpResponse::BadRequest().json(Response {
+            message: format!("User with username {} not found in database", &id),
         });
     }
     let user_res = username_result.unwrap();
@@ -390,28 +401,38 @@ pub async fn forgot_password(path: web::Path<String>, app_state: web::Data<AppSt
 
 // The implementation is clunky because the id parameter can accept id (i32) or an email or a username
 #[post("/users/changepassword/{id}")]
-pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppState>, form: web::Json<OtpPassword>) -> HttpResponse {
+pub async fn change_password(
+    path: web::Path<String>,
+    app_state: web::Data<AppState>,
+    form: web::Json<OtpPassword>,
+) -> HttpResponse {
     let url_parameter: String = path.into_inner();
     let hashed_pw = hash(&form.password);
-    let iser = HttpResponse::InternalServerError().json(Response{
-        message: "Something went wrong, try again later".to_string()
+    let iser = HttpResponse::InternalServerError().json(Response {
+        message: "Something went wrong, try again later".to_string(),
     });
-    let not_found_response = HttpResponse::NotFound().json(Response{
-        message: format!("OTP not found for the requested user: {}", &url_parameter)
+    let not_found_response = HttpResponse::NotFound().json(Response {
+        message: format!("OTP not found for the requested user: {}", &url_parameter),
     });
-    let expired_response = HttpResponse::BadRequest().json(Response{
-        message: "OTP expired, please request a new one".to_string()
+    let expired_response = HttpResponse::BadRequest().json(Response {
+        message: "OTP expired, please request a new one".to_string(),
     });
     let wrong_otp_response = HttpResponse::BadRequest().json(Response {
-        message: "Wrong OTP".to_string()
+        message: "Wrong OTP".to_string(),
     });
-    let successful_response = HttpResponse::Accepted().json(Response{
-        message: "Password changed successfully".to_string()
+    let successful_response = HttpResponse::Accepted().json(Response {
+        message: "Password changed successfully".to_string(),
     });
     let id_int_result = get_id(&url_parameter);
     if id_int_result.is_some() {
         let id_int = id_int_result.unwrap();
-        let q1 = sqlx::query_as!(ResetPassword, "SELECT id, otp, expires_at FROM forgot_password_email WHERE user_id=$1", id_int).fetch_one(&app_state.pool).await;
+        let q1 = sqlx::query_as!(
+            ResetPassword,
+            "SELECT id, otp, expires_at FROM forgot_password_email WHERE user_id=$1",
+            id_int
+        )
+        .fetch_one(&app_state.pool)
+        .await;
         if q1.is_err() {
             return not_found_response;
         }
@@ -422,8 +443,16 @@ pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppSt
         if q1_ans.otp != form.otp {
             return wrong_otp_response;
         }
-        let q2 = sqlx::query!("UPDATE users SET password=$1 WHERE id=$2", hashed_pw, id_int).execute(&app_state.pool).await;
-        let q3 = sqlx::query!("DELETE FROM forgot_password_email WHERE id=$1", q1_ans.id).execute(&app_state.pool).await;
+        let q2 = sqlx::query!(
+            "UPDATE users SET password=$1 WHERE id=$2",
+            hashed_pw,
+            id_int
+        )
+        .execute(&app_state.pool)
+        .await;
+        let q3 = sqlx::query!("DELETE FROM forgot_password_email WHERE id=$1", q1_ans.id)
+            .execute(&app_state.pool)
+            .await;
         if q2.is_err() || q3.is_err() {
             return iser;
         }
@@ -443,8 +472,16 @@ pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppSt
         if q4_ans.otp != form.otp {
             return wrong_otp_response;
         }
-        let q5 = sqlx::query!("UPDATE users SET password=$1 WHERE id=(SELECT id FROM users WHERE email=$2)", hashed_pw, email).execute(&app_state.pool).await;
-        let q6 = sqlx::query!("DELETE FROM forgot_password_email WHERE id=$1", q4_ans.id).execute(&app_state.pool).await;
+        let q5 = sqlx::query!(
+            "UPDATE users SET password=$1 WHERE id=(SELECT id FROM users WHERE email=$2)",
+            hashed_pw,
+            email
+        )
+        .execute(&app_state.pool)
+        .await;
+        let q6 = sqlx::query!("DELETE FROM forgot_password_email WHERE id=$1", q4_ans.id)
+            .execute(&app_state.pool)
+            .await;
         if q5.is_err() || q6.is_err() {
             return iser;
         }
@@ -452,8 +489,8 @@ pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppSt
     }
     let username_opt = get_valid_username(&url_parameter);
     if username_opt.is_none() {
-        return HttpResponse::BadRequest().json(Response{
-            message: "Bad URL parameter".to_string()
+        return HttpResponse::BadRequest().json(Response {
+            message: "Bad URL parameter".to_string(),
         });
     }
     let username = username_opt.unwrap();
@@ -468,8 +505,16 @@ pub async fn change_password(path: web::Path<String>, app_state: web::Data<AppSt
     if q7_ans.otp != form.otp {
         return wrong_otp_response;
     }
-    let q8 = sqlx::query!("UPDATE users SET password=$1 WHERE id=(SELECT id FROM users WHERE username=$2)", hashed_pw, username).execute(&app_state.pool).await;
-    let q9 = sqlx::query!("DELETE FROM forgot_password_email WHERE id=$1", q7_ans.id).execute(&app_state.pool).await;
+    let q8 = sqlx::query!(
+        "UPDATE users SET password=$1 WHERE id=(SELECT id FROM users WHERE username=$2)",
+        hashed_pw,
+        username
+    )
+    .execute(&app_state.pool)
+    .await;
+    let q9 = sqlx::query!("DELETE FROM forgot_password_email WHERE id=$1", q7_ans.id)
+        .execute(&app_state.pool)
+        .await;
     if q8.is_err() || q9.is_err() {
         return iser;
     }

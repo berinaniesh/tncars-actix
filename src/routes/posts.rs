@@ -2,6 +2,7 @@ use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
 use crate::misc::utils::get_correct_post_form;
 use crate::misc::utils::get_updated_post;
+use crate::models::comments::CommentOut;
 use crate::models::posts::{CreatePost, PostOut, UpdatePost, UpdatedPost};
 use crate::models::posts::{FuelType, TransmissionType};
 use crate::models::Response;
@@ -196,5 +197,23 @@ pub async fn delete_post(
     }
     return HttpResponse::Ok().json(Response {
         message: "Post deleted successfully".to_string(),
+    });
+}
+
+#[get("/posts/{post_id}/comments")]
+pub async fn get_comments(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
+    let post_id = path.into_inner();
+    let q1 = sqlx::query_as!(
+        CommentOut,
+        "SELECT * FROM comments WHERE post_id=$1",
+        post_id
+    )
+    .fetch_all(&app_state.pool)
+    .await;
+    if q1.is_ok() {
+        return HttpResponse::Ok().json(q1.unwrap());
+    }
+    return HttpResponse::InternalServerError().json(Response {
+        message: "Something went wrong, try again later".to_string(),
     });
 }

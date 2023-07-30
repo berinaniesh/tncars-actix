@@ -91,24 +91,6 @@ pub async fn delete_comment(
     });
 }
 
-#[get("/comments/{post_id}")]
-pub async fn get_comments(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
-    let post_id = path.into_inner();
-    let q1 = sqlx::query_as!(
-        CommentOut,
-        "SELECT * FROM comments WHERE post_id=$1",
-        post_id
-    )
-    .fetch_all(&app_state.pool)
-    .await;
-    if q1.is_ok() {
-        return HttpResponse::Ok().json(q1.unwrap());
-    }
-    return HttpResponse::InternalServerError().json(Response {
-        message: "Something went wrong, try again later".to_string(),
-    });
-}
-
 #[patch("/changecomment/{id}")]
 pub async fn change_comment(
     req: HttpRequest,

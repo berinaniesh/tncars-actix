@@ -75,7 +75,9 @@ pub async fn upload_profilepic(
         .await
         .unwrap()
         .await;
-        let q1 = sqlx::query!("SELECT profile_pic FROM users WHERE id=$1", user_id).fetch_one(&app_state.pool).await;
+        let q1 = sqlx::query!("SELECT profile_pic FROM users WHERE id=$1", user_id)
+            .fetch_one(&app_state.pool)
+            .await;
         if q1.is_ok() {
             let q1_img = q1.unwrap().profile_pic;
             if q1_img.is_some() {
@@ -83,7 +85,7 @@ pub async fn upload_profilepic(
                 let del_result = fs::remove_file(format!("upload/{}", old_image_fname)).await;
                 if del_result.is_err() {
                     println!("File {} not found in HDD", old_image_fname);
-                }                
+                }
             }
         }
         let _ = sqlx::query!(

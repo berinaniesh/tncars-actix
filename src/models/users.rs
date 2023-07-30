@@ -110,7 +110,6 @@ impl UserOut {
     }
 }
 
-
 #[derive(Deserialize, Debug)]
 pub struct OtpPassword {
     pub otp: String,

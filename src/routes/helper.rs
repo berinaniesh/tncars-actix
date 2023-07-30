@@ -24,8 +24,8 @@ pub async fn create_otp_and_send_email(
         .execute(&app_state.pool)
         .await;
     if delete_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response{
-            message: "Something went wrong, try again later".to_string()
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
         });
     }
     let insert_query = sqlx::query!(
@@ -38,22 +38,21 @@ pub async fn create_otp_and_send_email(
     .execute(&app_state.pool)
     .await;
     if insert_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response{
-            message: "Something went wrong, try again later".to_string()
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
         });
     }
     let ans = send_email(email, email_subject, email_body);
     if ans {
-        return HttpResponse::Ok().json(Response{
-            message: "Email sent successfully".to_string()
+        return HttpResponse::Ok().json(Response {
+            message: "Email sent successfully".to_string(),
         });
     } else {
         return HttpResponse::InternalServerError().json(Response {
-            message: "Something wrong with the mail server, try again later".to_string()
+            message: "Something wrong with the mail server, try again later".to_string(),
         });
     }
-}    
-
+}
 
 pub async fn make_email_verified(user_id: i32, app_state: &web::Data<AppState>) -> HttpResponse {
     let update_query = sqlx::query!("UPDATE users set email_verified='t' where id=$1", user_id)
@@ -142,18 +141,24 @@ pub async fn get_updated_user(
     return user_out;
 }
 
-pub async fn forgot_password_email(email: &String, app_state: &web::Data<AppState>) -> HttpResponse {
+pub async fn forgot_password_email(
+    email: &String,
+    app_state: &web::Data<AppState>,
+) -> HttpResponse {
     let otp = generate_otp();
     let verify_url = generate_verify_url();
     let email_subject = String::from("Reset your password");
     let email_body = format!("Someone requested a password reset for your account. If that was not you, you can safely ignore this email.\nThe OTP to validate your identity is {}.\nYou can also reset your password following the link below.\nhttps://tncars.pp.ua/changepassword/url/{}.\nThe OTP and the link are valid for the next 15 minutes\nRegards,\ntncars.pp.ua", otp, verify_url);
     let expiry = Utc::now() + Duration::seconds(OTP_EXPIRY);
-    let delete_query = sqlx::query!("DELETE FROM forgot_password_email WHERE user_id=(SELECT id FROM users WHERE email=$1)", email)
-        .execute(&app_state.pool)
-        .await;
+    let delete_query = sqlx::query!(
+        "DELETE FROM forgot_password_email WHERE user_id=(SELECT id FROM users WHERE email=$1)",
+        email
+    )
+    .execute(&app_state.pool)
+    .await;
     if delete_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response{
-            message: "Something went wrong, try again later".to_string()
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
         });
     }
     let insert_query = sqlx::query!(
@@ -165,19 +170,19 @@ pub async fn forgot_password_email(email: &String, app_state: &web::Data<AppStat
     )
     .execute(&app_state.pool)
     .await;
-if insert_query.is_err() {
-    return HttpResponse::InternalServerError().json(Response{
-        message: "Something went wrong, try again later".to_string()
-    });
-}
+    if insert_query.is_err() {
+        return HttpResponse::InternalServerError().json(Response {
+            message: "Something went wrong, try again later".to_string(),
+        });
+    }
     let ans = send_email(email.to_string(), email_subject, email_body);
     if ans {
-        return HttpResponse::Ok().json(Response{
-            message: "Email sent successfully".to_string()
+        return HttpResponse::Ok().json(Response {
+            message: "Email sent successfully".to_string(),
         });
     } else {
         return HttpResponse::InternalServerError().json(Response {
-            message: "Something wrong with the mail server, try again later".to_string()
+            message: "Something wrong with the mail server, try again later".to_string(),
         });
     }
 }
