@@ -34,13 +34,13 @@ pub async fn upload_profilepic(
         }
     }
 
-    let max_file_size: usize = 1_048_576; // 1 MB (in bytes) // should increase?
+    let max_file_size: usize = 2_097_152; // 2 MB (in bytes)
     let legal_filetypes: [Mime; 2] = [IMAGE_PNG, IMAGE_JPEG];
     let dir: &str = "./upload/";
 
     if content_length > max_file_size {
         return HttpResponse::BadRequest().json(Response {
-            message: "File too big, max allowed size is 1 MB".to_string(),
+            message: "File too big, max allowed size is 2 MB".to_string(),
         });
     }
 
@@ -68,7 +68,7 @@ pub async fn upload_profilepic(
             let uploaded_img: DynamicImage = image::open(&destination).unwrap();
             let _ = fs::remove_file(&destination).await.unwrap();
             uploaded_img
-                .resize(640, 480, FilterType::Lanczos3)
+                .resize(1024, 768, FilterType::Lanczos3)
                 .save(format!("{}{}", dir, new_fname2))
                 .unwrap();
         })

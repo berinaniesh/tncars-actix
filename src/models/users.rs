@@ -119,6 +119,7 @@ pub struct OtpPassword {
 
 #[derive(Debug, FromRow)]
 pub struct ResetPassword {
+    pub id: i32,
     pub otp: String,
     pub expires_at: DateTime<Utc>,
 }
