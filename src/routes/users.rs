@@ -520,3 +520,49 @@ pub async fn change_password(
     }
     return successful_response;
 }
+
+#[delete("/users/profilepic")]
+pub async fn delete_user_profile_pic(
+    req: HttpRequest,
+    app_state: web::Data<AppState>,
+) -> HttpResponse {
+    let user_id_result = get_id_from_request(&req, &app_state);
+    let user_id: i32;
+    match user_id_result.await {
+        Ok(id) => {
+            user_id = id;
+        }
+        Err(e) => {
+            return HttpResponse::Unauthorized().json(Response {
+                message: e.to_string(),
+            });
+        }
+    }
+    let q1 = sqlx::query!("SELECT profile_pic FROM users WHERE id=$1", user_id)
+        .fetch_one(&app_state.pool)
+        .await;
+    if q1.is_err() {
+        return HttpResponse::NotAcceptable().json(Response {
+            message: "No profile picture found in the database".to_string(),
+        });
+    }
+    let profile_pic_url = q1
+        .unwrap()
+        .profile_pic
+        .unwrap_or("SomeRandomName".to_string());
+    let del_result = tokio::fs::remove_file(format!("upload/{}", profile_pic_url)).await;
+    if del_result.is_err() {
+        println!("File {} not found in HDD", profile_pic_url);
+    }
+    let delete_query = sqlx::query!("UPDATE users SET profile_pic=NULL WHERE id=$1", user_id)
+        .execute(&app_state.pool)
+        .await;
+    if delete_query.is_ok() {
+        return HttpResponse::Ok().json(Response {
+            message: "Profile pic deleted".to_string(),
+        });
+    }
+    return HttpResponse::InternalServerError().json(Response {
+        message: "Something went wrong, try again later".to_string(),
+    });
+}

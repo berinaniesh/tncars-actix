@@ -99,3 +99,16 @@ pub struct UpdatePost {
     pub location: Option<String>,
     pub is_sold: Option<bool>,
 }
+
+#[derive(Debug, Serialize, FromRow)]
+pub struct ImagesOut {
+    pub id: i32,
+    pub image_url: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize)]
+pub struct PostImg {
+    pub user_id: i32,
+    pub post_pic: Option<String>,
+}

@@ -3,8 +3,8 @@ pub mod follows;
 pub mod hello;
 pub mod posts;
 pub mod users;
-pub mod verify;
 pub mod utils;
+pub mod verify;
 
 use serde::Serialize;
 
