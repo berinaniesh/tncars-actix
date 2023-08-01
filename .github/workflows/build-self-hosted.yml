@@ -1,4 +1,4 @@
-name: Build on self hosted machine
+name: Build on self hosted
 
 on:
   push:
