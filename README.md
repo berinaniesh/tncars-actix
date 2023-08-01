@@ -32,8 +32,8 @@ This is a personal project of mine, an instagram like site for cars,
 built for the local community. This repository contains the REST backend
 for the site.
 
-The code quality might not be exemplary, but it is great for didactic purposes
-especially for beginners.
+The code quality might not be exemplary, but it is great for didactic purposes.
 
 Anyone looking for better implementations, look into the real-world repo
 [here](https://github.com/gothinkster/realworld).
+
