@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT from_user AS user_id from follows WHERE to_user=(SELECT users.id FROM users WHERE username=$1)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "98aa47d8d5136b7f96a971a648db190bc2ddd738f82d9a1e4b991af0382bee78"
+}

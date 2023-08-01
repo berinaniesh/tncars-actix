@@ -1,0 +1,164 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE posts set \n        title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9, is_sold=$10\n        where id=$11 \n        RETURNING id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as \"transmission: _\", fuel as \"fuel: _\", description, location, is_sold, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "user_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "brand",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "post_pic",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "price",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "model_year",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "km_driven",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "transmission: _",
+        "type_info": {
+          "Custom": {
+            "name": "transmission_type",
+            "kind": {
+              "Enum": [
+                "Manual",
+                "Automatic",
+                "NotApplicable"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "fuel: _",
+        "type_info": {
+          "Custom": {
+            "name": "fuel_type",
+            "kind": {
+              "Enum": [
+                "Petrol",
+                "Diesel",
+                "CNG",
+                "Electric",
+                "Other"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "location",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 12,
+        "name": "is_sold",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Int4",
+        "Int4",
+        "Int4",
+        {
+          "Custom": {
+            "name": "transmission_type",
+            "kind": {
+              "Enum": [
+                "Manual",
+                "Automatic",
+                "NotApplicable"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "fuel_type",
+            "kind": {
+              "Enum": [
+                "Petrol",
+                "Diesel",
+                "CNG",
+                "Electric",
+                "Other"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Varchar",
+        "Bool",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "d878125f1902cde62acbcee74abe75002da4a88d7115c56f1d8a7b8bb2222875"
+}

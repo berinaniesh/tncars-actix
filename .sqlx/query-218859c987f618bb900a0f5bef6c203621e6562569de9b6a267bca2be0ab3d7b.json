@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM forgot_password_email WHERE user_id=(SELECT id FROM users WHERE email=$1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "218859c987f618bb900a0f5bef6c203621e6562569de9b6a267bca2be0ab3d7b"
+}

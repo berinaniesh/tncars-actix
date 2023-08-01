@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM follows WHERE from_user=$1 AND to_user=(SELECT users.id FROM users WHERE username=$2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7c9dc49d3e5f1b8d96e5a7e9d4b6fabb9efabb144c7f60d310ce0f685971ff9d"
+}

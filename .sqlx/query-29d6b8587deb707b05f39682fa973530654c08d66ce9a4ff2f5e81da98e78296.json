@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO forgot_password_email (user_id, otp, verify_url, expires_at) values ((SELECT id FROM users WHERE email=$1), $2, $3, $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Varchar",
+        "Varchar",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "29d6b8587deb707b05f39682fa973530654c08d66ce9a4ff2f5e81da98e78296"
+}
