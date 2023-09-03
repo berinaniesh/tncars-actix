@@ -2652,6 +2652,7 @@ dependencies = [
  "anyhow",
  "argon2",
  "chrono",
+ "derive_more",
  "dotenvy",
  "env_logger",
  "futures-util",

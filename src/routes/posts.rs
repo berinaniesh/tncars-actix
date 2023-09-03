@@ -7,31 +7,22 @@ use crate::models::posts::{CreatePost, ImagesOut, PostImg, PostOut, UpdatePost, 
 use crate::models::posts::{FuelType, TransmissionType};
 use crate::models::Response;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
+use crate::error::AppError;
 
 #[post("/posts")]
 pub async fn create_post(
     req: HttpRequest,
     app_state: web::Data<AppState>,
     user_form: web::Json<CreatePost>,
-) -> HttpResponse {
-    let user_id_result = get_id_from_request(&req, &app_state);
-    let user_id: i32;
-    match user_id_result.await {
-        Ok(id) => {
-            user_id = id;
-        }
-        Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
-                message: e.to_string(),
-            });
-        }
-    }
+) -> Result<HttpResponse, AppError> {
+    let user_id_result = get_id_from_request(&req, &app_state).await;
+    let user_id = user_id_result.unwrap();
     let form = get_correct_post_form(user_form);
     let query = sqlx::query_as!(PostOut,
         r#"
-        INSERT INTO posts 
+        INSERT INTO posts
         (title, user_id, brand, price, model_year, km_driven, transmission, fuel, description, location)
-        values 
+        values
         ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING
         id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
@@ -47,32 +38,23 @@ pub async fn create_post(
         &form.description,
         &form.location)
         .fetch_one(&app_state.pool)
-        .await;
+        .await?;
 
-    if query.is_ok() {
-        return HttpResponse::Created().json(query.unwrap());
-    }
-    return HttpResponse::InternalServerError().json(Response {
-        message: "Something went wrong, try again later".to_string(),
-    });
+    return Ok(HttpResponse::Created().json(query));
+
 }
 
 #[get("/posts/{id}")]
-pub async fn get_post(app_state: web::Data<AppState>, path: web::Path<i32>) -> HttpResponse {
+pub async fn get_post(app_state: web::Data<AppState>, path: web::Path<i32>) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let query = sqlx::query_as!(PostOut,
         r#"
         SELECT id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at FROM posts where id=$1
-        "#, post_id) 
+        "#, post_id)
         .fetch_one(&app_state.pool)
-        .await;
+        .await?;
 
-    if query.is_ok() {
-        return HttpResponse::Ok().json(query.unwrap());
-    }
-    return HttpResponse::NotFound().json(Response {
-        message: format!("Post with id: {} was not found", post_id),
-    });
+    return Ok(HttpResponse::Ok().json(query));
 }
 
 #[patch("/posts/{id}")]
@@ -119,9 +101,9 @@ pub async fn update_post(
     let updated_post = get_updated_post(form, db_data);
     let q2 = sqlx::query_as!(PostOut,
         r#"
-        UPDATE posts set 
+        UPDATE posts set
         title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9, is_sold=$10
-        where id=$11 
+        where id=$11
         RETURNING id, title, user_id, brand, post_pic, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold, created_at, updated_at
         "#,
         &updated_post.title,

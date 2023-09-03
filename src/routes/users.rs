@@ -14,6 +14,8 @@ use crate::routes::helper::{create_otp_and_send_email, forgot_password_email, ge
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 use chrono::Utc;
 
+use crate::error::AppError;
+
 #[post("/users")]
 pub async fn create_user(
     app_state: web::Data<AppState>,
@@ -57,7 +59,7 @@ pub async fn create_user(
 pub async fn login_user(
     app_state: web::Data<AppState>,
     form: web::Json<LoginUser>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let error_response = HttpResponse::BadRequest().json(Response {
         message: "Login unsuccessful, wrong email or username or password".to_string(),
     });
@@ -87,7 +89,7 @@ pub async fn login_user(
         // So, someone can find out if an email is registered or not by calculating the delay
         // So, hash the password once for slowing the return.
         let _ = hash(&form.password);
-        return error_response;
+        return Ok(error_response);
     }
 
     let id_password = pw_result.unwrap();
@@ -95,27 +97,27 @@ pub async fn login_user(
     let is_valid = verify(&form.password, &id_password.password);
 
     if is_valid {
-        let token = generate_token(id_password.id).unwrap();
+        let token = generate_token(id_password.id)?;
         let response = JWTResponse { jwt: token };
-        return HttpResponse::Ok().json(response);
+        return Ok(HttpResponse::Ok().json(response));
     } else {
-        return error_response;
+        return Ok(error_response);
     }
 }
 
 #[get("/users/refreshtoken")]
-pub async fn refresh_token(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn refresh_token(req: HttpRequest, app_state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
     let user_id_result = get_id_from_request(&req, &app_state);
     match user_id_result.await {
         Ok(val) => {
-            let token = generate_token(val).unwrap();
+            let token = generate_token(val)?;
             let response = JWTResponse { jwt: token };
-            return HttpResponse::Ok().json(response);
+            return Ok(HttpResponse::Ok().json(response));
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
 }
@@ -204,11 +206,11 @@ pub async fn update_user(
     }
     let updated_user = get_updated_user(user_id, &form, &app_state).await;
     let q = sqlx::query_as!(UserOut, r#"
-        UPDATE users SET 
+        UPDATE users SET
         email=$1, username=$2, phone=$3, first_name=$4, last_name=$5, bio=$6, address=$7, email_verified=$8, phone_verified=$9, email_public=$10, phone_public=$11
         WHERE id=$12
         RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at
-        "#, 
+        "#,
         updated_user.email, updated_user.username, updated_user.phone, updated_user.first_name, updated_user.last_name, updated_user.bio, updated_user.address, updated_user.email_verified, updated_user.phone_verified, updated_user.email_public, updated_user.phone_public, user_id).fetch_one(&app_state.pool).await;
     if q.is_err() {
         HttpResponse::InternalServerError().json(Response {

@@ -1,9 +1,10 @@
 use actix_web::{HttpResponse, ResponseError};
 use thiserror::Error;
+use jsonwebtoken::errors::Error as JWTError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-    #[error("Internal Server Error")]
+    #[error("Something went wrong, please try again later")]
     InternalServerError,
     #[error("Bad Request: (0)")]
     BadRequest(String),
@@ -20,8 +21,13 @@ impl ResponseError for AppError {
 }
 
 impl From<sqlx::Error> for AppError {
-    fn from(err: sqlx::Error) -> Self {
-        eprintln!("{:?}", err);
+    fn from(_err: sqlx::Error) -> Self {
+        AppError::InternalServerError
+    }
+}
+
+impl From<JWTError> for AppError {
+    fn from(err: JWTError) -> Self {
         AppError::InternalServerError
     }
 }

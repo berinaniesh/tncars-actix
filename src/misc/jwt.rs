@@ -3,7 +3,7 @@ use crate::misc::constants::JWT_EXPIRY;
 use actix_web::{web, HttpRequest};
 use anyhow::Error;
 use chrono::Utc;
-use jsonwebtoken;
+use jsonwebtoken::errors::Error as JWTError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,7 +23,7 @@ impl Claims {
     }
 }
 
-pub fn generate_token(id: i32) -> Result<String, Error> {
+pub fn generate_token(id: i32) -> Result<String, JWTError> {
     let claim = Claims::new(id);
     let secret = dotenvy::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let token = jsonwebtoken::encode(
