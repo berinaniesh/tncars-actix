@@ -1,6 +1,6 @@
-use actix_web::{web, get, post, HttpRequest, HttpResponse, Responder};
+use actix_web::{web, post, HttpRequest, HttpResponse};
 use crate::misc::appstate::AppState;
-use crate::models::messages::{SendMessage};
+use crate::models::messages::SendMessage;
 use crate::models::Response;
 use crate::misc::jwt::get_id_from_request;
 
