@@ -8,3 +8,4 @@ pub mod upload;
 pub mod users;
 pub mod utils;
 pub mod verify;
+pub mod messages;

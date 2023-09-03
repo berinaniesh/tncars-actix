@@ -67,6 +67,7 @@ impl TNCarsApp {
                 .service(routes::posts::delete_post_image)
                 .service(routes::posts::delete_post_primary_image)
                 .service(routes::users::delete_user_profile_pic)
+                .service(routes::messages::send_message)
         })
         .bind(("127.0.0.1", port))?
         .run()

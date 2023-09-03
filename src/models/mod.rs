@@ -5,6 +5,7 @@ pub mod posts;
 pub mod users;
 pub mod utils;
 pub mod verify;
+pub mod messages;
 
 use serde::Serialize;
 
