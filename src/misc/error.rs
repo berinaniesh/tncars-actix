@@ -1,6 +1,6 @@
 use actix_web::{HttpResponse, ResponseError};
-use thiserror::Error;
 use jsonwebtoken::errors::Error as JWTError;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AppError {

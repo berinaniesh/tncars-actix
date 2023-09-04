@@ -1,5 +1,5 @@
-use crate::misc::appstate::AppState;
 use crate::error::AppError;
+use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
 use crate::models::verify::{EmailVerOtp, EmailVerUrl};
 use crate::models::Response;
@@ -47,7 +47,10 @@ pub async fn email_otp(
 }
 
 #[get("/verify/email/url/{var}")]
-pub async fn email_url(app_state: web::Data<AppState>, path: web::Path<String>) -> Result<HttpResponse, AppError> {
+pub async fn email_url(
+    app_state: web::Data<AppState>,
+    path: web::Path<String>,
+) -> Result<HttpResponse, AppError> {
     let url = path.into_inner();
     let email_ver_url = sqlx::query_as!(
         EmailVerUrl,

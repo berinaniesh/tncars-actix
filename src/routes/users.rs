@@ -1,5 +1,5 @@
-use crate::misc::appstate::AppState;
 use crate::error::AppError;
+use crate::misc::appstate::AppState;
 use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
 use crate::misc::utils::get_id;
@@ -14,7 +14,6 @@ use crate::models::Response;
 use crate::routes::helper::{create_otp_and_send_email, forgot_password_email, get_updated_user};
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 use chrono::Utc;
-
 
 #[post("/users")]
 pub async fn create_user(
@@ -106,7 +105,10 @@ pub async fn login_user(
 }
 
 #[get("/users/refreshtoken")]
-pub async fn refresh_token(req: HttpRequest, app_state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
+pub async fn refresh_token(
+    req: HttpRequest,
+    app_state: web::Data<AppState>,
+) -> Result<HttpResponse, AppError> {
     let user_id_result = get_id_from_request(&req, &app_state);
     match user_id_result.await {
         Ok(val) => {
@@ -148,7 +150,10 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
 }
 
 #[get("/users/emailotp")]
-pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
+pub async fn get_email_otp(
+    req: HttpRequest,
+    app_state: web::Data<AppState>,
+) -> Result<HttpResponse, AppError> {
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {

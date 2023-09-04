@@ -1,7 +1,7 @@
 use crate::error::AppError;
 use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
-use crate::models::comments::{AddComment, CommentUser, CommentOut};
+use crate::models::comments::{AddComment, CommentOut, CommentUser};
 use crate::models::Response;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 

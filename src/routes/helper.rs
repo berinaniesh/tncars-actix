@@ -1,5 +1,5 @@
-use crate::misc::appstate::AppState;
 use crate::error::AppError;
+use crate::misc::appstate::AppState;
 use crate::misc::constants::OTP_EXPIRY;
 use crate::misc::email::send_email;
 use crate::misc::utils::{generate_otp, generate_verify_url};
@@ -45,7 +45,10 @@ pub async fn create_otp_and_send_email(
     }
 }
 
-pub async fn make_email_verified(user_id: i32, app_state: &web::Data<AppState>) -> Result<HttpResponse, AppError> {
+pub async fn make_email_verified(
+    user_id: i32,
+    app_state: &web::Data<AppState>,
+) -> Result<HttpResponse, AppError> {
     let _update_query = sqlx::query!("UPDATE users set email_verified='t' where id=$1", user_id)
         .execute(&app_state.pool)
         .await?;

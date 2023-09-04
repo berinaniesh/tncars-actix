@@ -1,3 +1,4 @@
+use crate::error::AppError;
 use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
 use crate::misc::utils::get_correct_post_form;
@@ -7,7 +8,6 @@ use crate::models::posts::{CreatePost, ImagesOut, PostImg, PostOut, UpdatePost, 
 use crate::models::posts::{FuelType, TransmissionType};
 use crate::models::Response;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
-use crate::error::AppError;
 
 #[post("/posts")]
 pub async fn create_post(
@@ -41,11 +41,13 @@ pub async fn create_post(
         .await?;
 
     return Ok(HttpResponse::Created().json(query));
-
 }
 
 #[get("/posts/{id}")]
-pub async fn get_post(app_state: web::Data<AppState>, path: web::Path<i32>) -> Result<HttpResponse, AppError> {
+pub async fn get_post(
+    app_state: web::Data<AppState>,
+    path: web::Path<i32>,
+) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let query = sqlx::query_as!(PostOut,
         r#"
@@ -63,7 +65,7 @@ pub async fn update_post(
     form: web::Json<UpdatePost>,
     app_state: web::Data<AppState>,
     path: web::Path<i32>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
@@ -72,34 +74,28 @@ pub async fn update_post(
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
-    let q1 = sqlx::query_as!(UpdatedPost,
+    let db_data = sqlx::query_as!(UpdatedPost,
         r#"
         SELECT
         title, user_id, brand, price, model_year, km_driven, transmission as "transmission: _", fuel as "fuel: _", description, location, is_sold
         FROM posts WHERE id=$1
         "#, post_id)
-        .fetch_one(&app_state.pool).await;
+        .fetch_one(&app_state.pool).await?;
 
-    if q1.is_err() {
-        return HttpResponse::NotFound().json(Response {
-            message: format!("Post with id: {} was not found in the database", post_id),
-        });
-    }
-    let db_data = q1.unwrap();
     let user_id_db = db_data.user_id;
     let user_id_jwt: i32 = user_id;
     if user_id_db != user_id_jwt {
-        return HttpResponse::Unauthorized().json(Response {
+        return Ok(HttpResponse::Unauthorized().json(Response {
             message: "You cannot modify someone else's post".to_string(),
-        });
+        }));
     }
     let updated_post = get_updated_post(form, db_data);
-    let q2 = sqlx::query_as!(PostOut,
+    let postout = sqlx::query_as!(PostOut,
         r#"
         UPDATE posts set
         title=$1, brand=$2, price=$3, model_year=$4, km_driven=$5, transmission=$6, fuel=$7, description=$8, location=$9, is_sold=$10
@@ -118,14 +114,8 @@ pub async fn update_post(
         &updated_post.is_sold,
         post_id)
         .fetch_one(&app_state.pool)
-        .await;
-    if q2.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    let postout = q2.unwrap();
-    return HttpResponse::Ok().json(postout);
+        .await?;
+    return Ok(HttpResponse::Ok().json(postout));
 }
 
 #[delete("/posts/{id}")]

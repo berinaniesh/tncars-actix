@@ -1,13 +1,12 @@
 use actix_web::{http::StatusCode, HttpResponse};
-use thiserror::Error;
-use sqlx::Error as SqlxError;
+use jsonwebtoken::errors::Error as JWTError;
 use serde_json::json;
 use serde_json::Value as JsonValue;
-use jsonwebtoken::errors::Error as JWTError;
+use sqlx::Error as SqlxError;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AppError {
-
     #[error("Internal Server Error")]
     InternalServerError(JsonValue),
 
@@ -19,24 +18,15 @@ pub enum AppError {
 
     #[error("Unprocessable Entity")]
     UnprocessableEntity(JsonValue),
-
 }
 
 impl actix_web::error::ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            AppError::InternalServerError(ref msg) => {
-                HttpResponse::InternalServerError().json(msg)
-            }
-            AppError::NotFound(ref msg) => {
-                HttpResponse::NotFound().json(msg)
-            }
-            AppError::Unauthorized(ref msg) => {
-                HttpResponse::Unauthorized().json(msg)
-            }
-            AppError::UnprocessableEntity(ref msg) => {
-                HttpResponse::UnprocessableEntity().json(msg)
-            }
+            AppError::InternalServerError(ref msg) => HttpResponse::InternalServerError().json(msg),
+            AppError::NotFound(ref msg) => HttpResponse::NotFound().json(msg),
+            AppError::Unauthorized(ref msg) => HttpResponse::Unauthorized().json(msg),
+            AppError::UnprocessableEntity(ref msg) => HttpResponse::UnprocessableEntity().json(msg),
         }
     }
     fn status_code(&self) -> StatusCode {
@@ -55,12 +45,12 @@ impl From<SqlxError> for AppError {
             SqlxError::RowNotFound => {
                 AppError::NotFound(json!({"message": "The requested resource was not found"}))
             }
-            SqlxError::Database(_) => {
-                AppError::UnprocessableEntity(json!({"message": "You probably are violating some constraints"}))
-            }
-            _ => {
-                AppError::InternalServerError(json!({"message": "Something went wrong with the database"}))
-            }
+            SqlxError::Database(_) => AppError::UnprocessableEntity(
+                json!({"message": "You probably are violating some constraints"}),
+            ),
+            _ => AppError::InternalServerError(
+                json!({"message": "Something went wrong with the database"}),
+            ),
         }
     }
 }

@@ -1,7 +1,7 @@
+mod error;
 mod misc;
 mod models;
 mod routes;
-mod error;
 
 use actix_files as fs;
 use actix_web::middleware::Logger;
