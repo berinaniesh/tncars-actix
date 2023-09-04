@@ -16,6 +16,6 @@ pub struct CommentOut {
     pub updated_at: DateTime<Utc>,
 }
 
-pub struct CommentDelete {
+pub struct CommentUser {
     pub user_id: i32,
 }

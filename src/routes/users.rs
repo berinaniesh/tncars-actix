@@ -1,4 +1,5 @@
 use crate::misc::appstate::AppState;
+use crate::error::AppError;
 use crate::misc::hasher::{hash, verify};
 use crate::misc::jwt::{generate_token, get_id_from_request};
 use crate::misc::utils::get_id;
@@ -14,7 +15,6 @@ use crate::routes::helper::{create_otp_and_send_email, forgot_password_email, ge
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 use chrono::Utc;
 
-use crate::error::AppError;
 
 #[post("/users")]
 pub async fn create_user(
@@ -148,7 +148,7 @@ pub async fn get_current_user(req: HttpRequest, app_state: web::Data<AppState>) 
 }
 
 #[get("/users/emailotp")]
-pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
     match user_id_result.await {
@@ -156,30 +156,23 @@ pub async fn get_email_otp(req: HttpRequest, app_state: web::Data<AppState>) -> 
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
 
-    let query_result = sqlx::query_as!(
+    let user = sqlx::query_as!(
         EmailOTP,
         "SELECT id, email, email_verified FROM users WHERE id=$1",
         user_id
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if query_result.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    let user = query_result.unwrap();
-
+    .await?;
     if user.email_verified {
-        return HttpResponse::BadRequest().json(Response {
+        return Ok(HttpResponse::BadRequest().json(Response {
             message: "User already verified".to_string(),
-        });
+        }));
     }
 
     return create_otp_and_send_email(user.id, user.email, &app_state).await;

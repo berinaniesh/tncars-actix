@@ -11,6 +11,7 @@ pub async fn follow_user(
     app_state: web::Data<AppState>,
     path: web::Path<String>,
 ) -> HttpResponse {
+    // Needs change according to the new error handling
     let user_id_result = get_id_from_request(&req, &app_state);
     let from_follow: i32;
     match user_id_result.await {
@@ -51,9 +52,6 @@ pub async fn follow_user(
                 message: "Follow removed".to_string(),
             });
         }
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
     }
     let q3 = sqlx::query!("INSERT INTO follows (from_user, to_user) VALUES ($1, (SELECT users.id FROM users WHERE username=$2))", from_follow, username_to_follow).execute(&app_state.pool).await;
     if q3.is_ok() {
@@ -77,6 +75,7 @@ pub async fn get_following(
     path: web::Path<String>,
     app_state: web::Data<AppState>,
 ) -> HttpResponse {
+    // Needs change according to the new error handling
     let username = path.into_inner();
     let user_id_opt = get_id(&username);
     if user_id_opt.is_some() {
@@ -116,6 +115,7 @@ pub async fn get_followed_by(
     path: web::Path<String>,
     app_state: web::Data<AppState>,
 ) -> HttpResponse {
+    // Needs change according to new error handling
     let username = path.into_inner();
     let user_id_opt = get_id(&username);
     if user_id_opt.is_some() {

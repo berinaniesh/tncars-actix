@@ -1,4 +1,5 @@
 use crate::misc::appstate::AppState;
+use crate::error::AppError;
 use crate::misc::constants::OTP_EXPIRY;
 use crate::misc::email::send_email;
 use crate::misc::utils::{generate_otp, generate_verify_url};
@@ -14,21 +15,16 @@ pub async fn create_otp_and_send_email(
     user_id: i32,
     email: String,
     app_state: &web::Data<AppState>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let otp = generate_otp();
     let verify_url = generate_verify_url();
     let email_subject = String::from("Verify your account");
     let email_body = format!("The OTP to verify your account is {}.\nYou can also verify your account by clicking the link below.\nhttps://tncars.pp.ua/verify/url/{}.\nThe OTP and the link are valid for the next 15 minutes\nRegards,\ntncars.pp.ua", otp, verify_url);
     let expiry = Utc::now() + Duration::seconds(OTP_EXPIRY);
-    let delete_query = sqlx::query!("DELETE FROM email_otp where id=$1", user_id)
+    let _ = sqlx::query!("DELETE FROM email_otp where id=$1", user_id)
         .execute(&app_state.pool)
-        .await;
-    if delete_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    let insert_query = sqlx::query!(
+        .await?;
+    let _ = sqlx::query!(
         "INSERT INTO email_otp (user_id, otp, verify_url, expires_at) values ($1, $2, $3, $4)",
         user_id,
         otp,
@@ -36,39 +32,29 @@ pub async fn create_otp_and_send_email(
         expiry
     )
     .execute(&app_state.pool)
-    .await;
-    if insert_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
+    .await?;
     let ans = send_email(email, email_subject, email_body);
     if ans {
-        return HttpResponse::Ok().json(Response {
+        return Ok(HttpResponse::Ok().json(Response {
             message: "Email sent successfully".to_string(),
-        });
+        }));
     } else {
-        return HttpResponse::InternalServerError().json(Response {
+        return Ok(HttpResponse::InternalServerError().json(Response {
             message: "Something wrong with the mail server, try again later".to_string(),
-        });
+        }));
     }
 }
 
-pub async fn make_email_verified(user_id: i32, app_state: &web::Data<AppState>) -> HttpResponse {
-    let update_query = sqlx::query!("UPDATE users set email_verified='t' where id=$1", user_id)
+pub async fn make_email_verified(user_id: i32, app_state: &web::Data<AppState>) -> Result<HttpResponse, AppError> {
+    let _update_query = sqlx::query!("UPDATE users set email_verified='t' where id=$1", user_id)
         .execute(&app_state.pool)
-        .await;
-    let delete_query = sqlx::query!("DELETE from email_otp where user_id=$1", user_id)
+        .await?;
+    let _delete_query = sqlx::query!("DELETE from email_otp where user_id=$1", user_id)
         .execute(&app_state.pool)
-        .await;
-    if update_query.is_err() || delete_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    return HttpResponse::Ok().json(Response {
+        .await?;
+    return Ok(HttpResponse::Ok().json(Response {
         message: "Email successfully verified".to_string(),
-    });
+    }));
 }
 
 pub async fn get_updated_user(

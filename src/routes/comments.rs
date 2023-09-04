@@ -1,7 +1,7 @@
 use crate::error::AppError;
 use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
-use crate::models::comments::{AddComment, CommentDelete, CommentOut};
+use crate::models::comments::{AddComment, CommentUser, CommentOut};
 use crate::models::Response;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse};
 
@@ -25,7 +25,7 @@ pub async fn add_comment(
             }));
         }
     }
-    let q1 = sqlx::query_as!(
+    let comment = sqlx::query_as!(
         CommentOut,
         "INSERT INTO comments (user_id, post_id, comment) VALUES ($1, $2, $3) RETURNING *",
         user_id,
@@ -34,7 +34,7 @@ pub async fn add_comment(
     )
     .fetch_one(&app_state.pool)
     .await?;
-    return Ok(HttpResponse::Created().json(q1));
+    return Ok(HttpResponse::Created().json(comment));
 }
 
 #[delete("/deletecomment/{comment_id}")]
@@ -57,7 +57,7 @@ pub async fn delete_comment(
         }
     }
     let q1 = sqlx::query_as!(
-        CommentDelete,
+        CommentUser,
         "SELECT user_id FROM comments WHERE id=$1",
         comment_id
     )
@@ -99,7 +99,7 @@ pub async fn change_comment(
         }
     }
     let q1 = sqlx::query_as!(
-        CommentDelete,
+        CommentUser,
         "SELECT user_id FROM comments WHERE id=$1",
         comment_id
     )
@@ -128,8 +128,8 @@ pub async fn get_specific_comment(
     app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, AppError> {
     let comment_id = path.into_inner();
-    let q = sqlx::query_as!(CommentOut, "SELECT * FROM comments WHERE id=$1", comment_id)
+    let comment = sqlx::query_as!(CommentOut, "SELECT * FROM comments WHERE id=$1", comment_id)
         .fetch_one(&app_state.pool)
         .await?;
-    return Ok(HttpResponse::Ok().json(q));
+    return Ok(HttpResponse::Ok().json(comment));
 }
