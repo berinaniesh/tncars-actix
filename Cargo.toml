@@ -32,6 +32,7 @@ mime = "0.3.17"
 rand = "0.8.5"
 regex = "1.9.1"
 serde = "1.0.163"
+serde_json = "1.0.105"
 sqlx = { version = "0.7.1", features = ["postgres", "macros", "runtime-tokio", "chrono"] }
 thiserror = "1.0.43"
 tokio = { version = "1.29.1", features = ["fs"] }

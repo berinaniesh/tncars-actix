@@ -1,3 +1,4 @@
+use crate::error::AppError;
 use crate::misc::appstate::AppState;
 use crate::misc::jwt::get_id_from_request;
 use crate::models::comments::{AddComment, CommentDelete, CommentOut};
@@ -10,7 +11,7 @@ pub async fn add_comment(
     app_state: web::Data<AppState>,
     form: web::Json<AddComment>,
     path: web::Path<i32>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
@@ -19,9 +20,9 @@ pub async fn add_comment(
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
     let q1 = sqlx::query_as!(
@@ -32,13 +33,8 @@ pub async fn add_comment(
         &form.comment
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if q1.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    return HttpResponse::Created().json(q1.unwrap());
+    .await?;
+    return Ok(HttpResponse::Created().json(q1));
 }
 
 #[delete("/deletecomment/{comment_id}")]
@@ -46,7 +42,7 @@ pub async fn delete_comment(
     req: HttpRequest,
     app_state: web::Data<AppState>,
     path: web::Path<i32>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let comment_id = path.into_inner();
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
@@ -55,9 +51,9 @@ pub async fn delete_comment(
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
     let q1 = sqlx::query_as!(
@@ -66,29 +62,20 @@ pub async fn delete_comment(
         comment_id
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if q1.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "The comment you requested does not exist".to_string(),
-        });
-    }
-    let comment_user_id = q1.unwrap().user_id;
+    .await?;
+    let comment_user_id = q1.user_id;
     if comment_user_id != user_id {
-        return HttpResponse::Unauthorized().json(Response {
+        return Ok(HttpResponse::Unauthorized().json(Response {
             message: "You cannot delete someone else's comment".to_string(),
-        });
+        }));
     }
-    let q2 = sqlx::query!("DELETE FROM comments WHERE id=$1", comment_id)
+    let _ = sqlx::query!("DELETE FROM comments WHERE id=$1", comment_id)
         .execute(&app_state.pool)
-        .await;
-    if q2.is_ok() {
-        return HttpResponse::Ok().json(Response {
-            message: "Comment deleted".to_string(),
-        });
-    }
-    return HttpResponse::InternalServerError().json(Response {
-        message: "Something went wrong, try again later".to_string(),
-    });
+        .await?;
+
+    return Ok(HttpResponse::Ok().json(Response {
+        message: "Comment deleted".to_string(),
+    }));
 }
 
 #[patch("/changecomment/{id}")]
@@ -97,7 +84,7 @@ pub async fn change_comment(
     path: web::Path<i32>,
     app_state: web::Data<AppState>,
     form: web::Json<AddComment>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let comment_id = path.into_inner();
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
@@ -106,9 +93,9 @@ pub async fn change_comment(
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
     let q1 = sqlx::query_as!(
@@ -117,17 +104,12 @@ pub async fn change_comment(
         comment_id
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if q1.is_err() {
-        return HttpResponse::BadRequest().json(Response {
-            message: "The comment you requested does not exist".to_string(),
-        });
-    }
-    let comment_user_id = q1.unwrap().user_id;
+    .await?;
+    let comment_user_id = q1.user_id;
     if comment_user_id != user_id {
-        return HttpResponse::Unauthorized().json(Response {
+        return Ok(HttpResponse::Unauthorized().json(Response {
             message: "You cannot edit someone else's comment".to_string(),
-        });
+        }));
     }
     let q2 = sqlx::query_as!(
         CommentOut,
@@ -136,28 +118,18 @@ pub async fn change_comment(
         comment_id
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if q2.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    return HttpResponse::Accepted().json(q2.unwrap());
+    .await?;
+    return Ok(HttpResponse::Accepted().json(q2));
 }
 
 #[get("/comment/{id}")]
 pub async fn get_specific_comment(
     path: web::Path<i32>,
     app_state: web::Data<AppState>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let comment_id = path.into_inner();
     let q = sqlx::query_as!(CommentOut, "SELECT * FROM comments WHERE id=$1", comment_id)
         .fetch_one(&app_state.pool)
-        .await;
-    if q.is_ok() {
-        return HttpResponse::Ok().json(q.unwrap());
-    }
-    return HttpResponse::BadRequest().json(Response {
-        message: "The requested comment is not found in the database".to_string(),
-    });
+        .await?;
+    return Ok(HttpResponse::Ok().json(q));
 }
