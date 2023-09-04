@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE users SET \n        email=$1, username=$2, phone=$3, first_name=$4, last_name=$5, bio=$6, address=$7, email_verified=$8, phone_verified=$9, email_public=$10, phone_public=$11\n        WHERE id=$12\n        RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at\n        ",
+  "query": "\n        UPDATE users SET\n        email=$1, username=$2, phone=$3, first_name=$4, last_name=$5, bio=$6, address=$7, email_verified=$8, phone_verified=$9, email_public=$10, phone_public=$11\n        WHERE id=$12\n        RETURNING id, email, username, phone, first_name, last_name, bio, address, profile_pic, credits, email_verified, phone_verified, email_public, phone_public, is_active, created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -125,5 +125,5 @@
       false
     ]
   },
-  "hash": "425a5c7c4655df03425fc1541b9bf4c3344d5e3351e1da83c1abd8c2571448d1"
+  "hash": "c6ca84c24a81f30493686a0f34f208c03d143368cbf2d794af6fff93bb230dad"
 }

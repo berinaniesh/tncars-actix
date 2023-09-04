@@ -21,7 +21,7 @@ These are long term todos. The codebase can be improved in many areas,
 especially in the authentication side.
 
 - [ ] SwaggerUI for API documentation
-- [ ] Better error handling throughout (implement AppError)
+- [x] Better error handling throughout (implement AppError)
 - [ ] Better implementation of protected routes
 - [ ] Proper returning sql queries
 - [ ] Convert messaging to websockets
