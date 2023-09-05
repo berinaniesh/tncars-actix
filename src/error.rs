@@ -1,5 +1,5 @@
 use actix_web::{http::StatusCode, HttpResponse};
-use jsonwebtoken::errors::Error as JWTError;
+use jsonwebtoken::errors::{Error as JWTError, ErrorKind as JWTErrorKind};
 use serde_json::json;
 use serde_json::Value as JsonValue;
 use sqlx::Error as SqlxError;
@@ -56,7 +56,15 @@ impl From<SqlxError> for AppError {
 }
 
 impl From<JWTError> for AppError {
-    fn from(_err: JWTError) -> Self {
-        AppError::Unauthorized(json!({"message": "Something wrong with JWT"}))
+    fn from(err: JWTError) -> Self {
+        match err.kind() {
+            JWTErrorKind::ExpiredSignature => {
+                AppError::Unauthorized(json!({"message": "Expired JWT signature"}))
+            }
+            _ => {
+                AppError::Unauthorized(json!({"message": "Something wrong with the JWT"}))
+            }
+        }
+
     }
 }
