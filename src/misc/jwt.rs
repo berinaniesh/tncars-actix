@@ -34,7 +34,7 @@ pub fn generate_token(id: i32) -> Result<String, JWTError> {
     return Ok(token);
 }
 
-fn get_id_from_token(token: String) -> Result<i32, Error> {
+fn get_id_from_token(token: String) -> Result<i32, JWTError> {
     let secret = dotenvy::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let token_data_result = jsonwebtoken::decode::<Claims>(
         &token,
@@ -42,9 +42,6 @@ fn get_id_from_token(token: String) -> Result<i32, Error> {
         &jsonwebtoken::Validation::default(),
     );
     let token_data = token_data_result?;
-    if token_data.claims.exp < Utc::now().timestamp() {
-        return Err(Error::msg("Token Expired"));
-    }
     return Ok(token_data.claims.user_id);
 }
 
