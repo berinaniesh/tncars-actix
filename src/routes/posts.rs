@@ -123,7 +123,7 @@ pub async fn delete_post(
     req: HttpRequest,
     app_state: web::Data<AppState>,
     path: web::Path<i32>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
@@ -132,48 +132,37 @@ pub async fn delete_post(
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
 
-    let q1 = sqlx::query!(
+    let db_user = sqlx::query!(
         r#"
         SELECT user_id FROM posts WHERE id=$1
         "#,
         post_id
     )
     .fetch_one(&app_state.pool)
-    .await;
+    .await?;
 
-    if q1.is_err() {
-        return HttpResponse::NotFound().json(Response {
-            message: format!("Post with id: {} was not found in the database", post_id),
-        });
-    }
     let req_user = user_id;
-    let db_user = q1.unwrap().user_id;
-    if req_user != db_user {
-        return HttpResponse::Unauthorized().json(Response {
+    if req_user != db_user.user_id {
+        return Ok(HttpResponse::Unauthorized().json(Response {
             message: "You cannot delete someone else's post".to_string(),
-        });
+        }));
     }
-    let delete_req = sqlx::query!("DELETE FROM posts WHERE id=$1", post_id)
+    let _delete_req = sqlx::query!("DELETE FROM posts WHERE id=$1", post_id)
         .execute(&app_state.pool)
-        .await;
-    if delete_req.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong".to_string(),
-        });
-    }
-    return HttpResponse::Ok().json(Response {
+        .await?;
+    return Ok(HttpResponse::Ok().json(Response {
         message: "Post deleted successfully".to_string(),
-    });
+    }));
 }
 
 #[get("/posts/{post_id}/comments")]
-pub async fn get_comments(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn get_comments(path: web::Path<i32>, app_state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let q1 = sqlx::query_as!(
         CommentOut,
@@ -181,17 +170,12 @@ pub async fn get_comments(path: web::Path<i32>, app_state: web::Data<AppState>) 
         post_id
     )
     .fetch_all(&app_state.pool)
-    .await;
-    if q1.is_ok() {
-        return HttpResponse::Ok().json(q1.unwrap());
-    }
-    return HttpResponse::InternalServerError().json(Response {
-        message: "Something went wrong, try again later".to_string(),
-    });
+    .await?;
+    return Ok(HttpResponse::Ok().json(q1));
 }
 
 #[get("/posts/{post_id}/images")]
-pub async fn get_post_images(path: web::Path<i32>, app_state: web::Data<AppState>) -> HttpResponse {
+pub async fn get_post_images(path: web::Path<i32>, app_state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let q1 = sqlx::query_as!(
         ImagesOut,
@@ -199,13 +183,8 @@ pub async fn get_post_images(path: web::Path<i32>, app_state: web::Data<AppState
         post_id
     )
     .fetch_all(&app_state.pool)
-    .await;
-    if q1.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    return HttpResponse::Ok().json(q1.unwrap());
+    .await?;
+    return Ok(HttpResponse::Ok().json(q1));
 }
 
 #[delete("/posts/{post_id}/postpic")]
@@ -213,7 +192,7 @@ pub async fn delete_post_primary_image(
     req: HttpRequest,
     path: web::Path<i32>,
     app_state: web::Data<AppState>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let post_id = path.into_inner();
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
@@ -222,51 +201,40 @@ pub async fn delete_post_primary_image(
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
-    let user_id_post_result = sqlx::query_as!(
+    let post_img = sqlx::query_as!(
         PostImg,
         "SELECT user_id, post_pic FROM posts WHERE id=$1",
         post_id
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if user_id_post_result.is_err() {
-        return HttpResponse::NotFound().json(Response {
-            message: "Post not found".to_string(),
-        });
-    }
-    let post_img = user_id_post_result.unwrap();
+    .await?;
     if user_id != post_img.user_id {
-        return HttpResponse::Unauthorized().json(Response {
+        return Ok(HttpResponse::Unauthorized().json(Response {
             message: "You cannot delete someone else's posts's pic".to_string(),
-        });
+        }));
     }
     let post_pic_opt = post_img.post_pic;
     if post_pic_opt.is_none() {
-        return HttpResponse::NotAcceptable().json(Response {
+        return Ok(HttpResponse::NotAcceptable().json(Response {
             message: "The post does not have a primary pic".to_string(),
-        });
+        }));
     }
     let post_pic_fname = post_pic_opt.unwrap();
     let del_result = tokio::fs::remove_file(format!("upload/{}", post_pic_fname)).await;
     if del_result.is_err() {
         println!("File {} not found in HDD", post_pic_fname);
     }
-    let set_null_query = sqlx::query!("UPDATE posts SET post_pic=NULL WHERE id=$1", post_id)
+    let _set_null_query = sqlx::query!("UPDATE posts SET post_pic=NULL WHERE id=$1", post_id)
         .execute(&app_state.pool)
-        .await;
-    if set_null_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    return HttpResponse::Accepted().json(Response {
+        .await?;
+    return Ok(HttpResponse::Accepted().json(Response {
         message: "Pic deleted successfully".to_string(),
-    });
+    }));
 }
 
 #[delete("/postimages/{image_id}")]
@@ -274,7 +242,7 @@ pub async fn delete_post_image(
     req: HttpRequest,
     path: web::Path<i32>,
     app_state: web::Data<AppState>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let image_id = path.into_inner();
     let user_id_result = get_id_from_request(&req, &app_state);
     let user_id: i32;
@@ -283,9 +251,9 @@ pub async fn delete_post_image(
             user_id = id;
         }
         Err(e) => {
-            return HttpResponse::Unauthorized().json(Response {
+            return Ok(HttpResponse::Unauthorized().json(Response {
                 message: e.to_string(),
-            });
+            }));
         }
     }
     let img_owner_query = sqlx::query!(
@@ -293,35 +261,25 @@ pub async fn delete_post_image(
         image_id
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if img_owner_query.is_err() {
-        return HttpResponse::NotFound().json(Response {
-            message: "Requested image not found".to_string(),
-        });
-    }
-    let img_owner_id = img_owner_query.unwrap().user_id;
+    .await?;
+    let img_owner_id = img_owner_query.user_id;
     if img_owner_id != user_id {
-        return HttpResponse::BadRequest().json(Response {
+        return Ok(HttpResponse::BadRequest().json(Response {
             message: "You cannot delete someone else's images".to_string(),
-        });
+        }));
     }
     let delete_query = sqlx::query!(
         "DELETE FROM posts_images WHERE id=$1 RETURNING image_url",
         image_id
     )
     .fetch_one(&app_state.pool)
-    .await;
-    if delete_query.is_err() {
-        return HttpResponse::InternalServerError().json(Response {
-            message: "Something went wrong, try again later".to_string(),
-        });
-    }
-    let image_fname = delete_query.unwrap().image_url;
+    .await?;
+    let image_fname = delete_query.image_url;
     let del_result = tokio::fs::remove_file(format!("upload/{}", image_fname)).await;
     if del_result.is_err() {
         println!("File {} not found in HDD", image_fname);
     }
-    return HttpResponse::Ok().json(Response {
+    return Ok(HttpResponse::Ok().json(Response {
         message: "Image deleted successfully".to_string(),
-    });
+    }));
 }
