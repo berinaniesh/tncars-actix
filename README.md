@@ -2,6 +2,11 @@
 
 REST backend for TNCars, written using Actix-Web and sqlx.
 
+This project is being rewritten with "idiomatic rust" and "best practices"
+(like refresh tokens, error propagation etc). 
+
+This repo probably won't receive updates anymore. 
+
 ## To Do (Short Term)
 
 - [x] Delete the old pic when profile pics are updated
@@ -31,9 +36,3 @@ especially in the authentication side.
 This is a personal project of mine, an instagram like site for cars,
 built for the local community. This repository contains the REST backend
 for the site.
-
-The code quality might not be exemplary, but it is great for didactic purposes.
-
-Anyone looking for better implementations, look into the real-world repo
-[here](https://github.com/gothinkster/realworld).
-
