@@ -2,10 +2,8 @@
 
 REST backend for TNCars, written using Actix-Web and sqlx.
 
-This project is being rewritten with "idiomatic rust" and "best practices"
-(like refresh tokens, error propagation, swagger docs, etc). 
-
-This repo probably won't receive updates anymore. 
+*This site is being rewritten with to be used in production with "microservices". 
+This repo remains for didactic purposes*
 
 ## To Do (Short Term)
 
